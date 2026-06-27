@@ -3,16 +3,16 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
-import { colors, spacing, typography } from '@/theme';
+import { colors, spacing, typography } from '@shared/theme';
 
 export default function ProjectDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   return (
     <View style={styles.root}>
-      <Text style={typography.viewTitle}>도형 편집기</Text>
+      <Text style={typography.projectTitle}>도형 편집기</Text>
       <Text style={[typography.metadata, styles.note]}>Phase 1 에서 구현 예정</Text>
-      <Text style={[typography.monoId, styles.note]}>project: {id}</Text>
+      <Text style={[typography.metadata, styles.note]}>project: {id}</Text>
     </View>
   );
 }

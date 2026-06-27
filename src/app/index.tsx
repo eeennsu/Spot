@@ -5,15 +5,15 @@ import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useProjectStore } from '@/store/projectStore';
-import { colors, radius, spacing, typography } from '@/theme';
+import { useProjectList } from '@features/project/hooks/useProjectList';
+import { useProjectCreate } from '@features/project/hooks/useProjectCreate';
+import { colors, radius, spacing, typography } from '@shared/theme';
 
 export default function ProjectsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const projects = useProjectStore((s) => s.projects);
-  const load = useProjectStore((s) => s.load);
-  const addProject = useProjectStore((s) => s.addProject);
+  const { projects, load } = useProjectList();
+  const addProject = useProjectCreate();
   const [name, setName] = useState('');
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function ProjectsScreen() {
             onPress={() => router.push(`/project/${item.id}`)}
             style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
           >
-            <Text style={typography.issueTitle}>{item.name}</Text>
+            <Text style={typography.taskTitle}>{item.name}</Text>
             <Text style={typography.metadata}>탭하여 열기</Text>
           </Pressable>
         )}
@@ -55,7 +55,7 @@ export default function ProjectsScreen() {
           onChangeText={setName}
           placeholder="새 평면도 이름"
           placeholderTextColor={colors.textTertiary}
-          selectionColor={colors.purple}
+          selectionColor={colors.blue}
           returnKeyType="done"
           onSubmitEditing={onAdd}
         />
@@ -63,7 +63,7 @@ export default function ProjectsScreen() {
           onPress={onAdd}
           style={({ pressed }) => [styles.addBtn, pressed && styles.addBtnPressed]}
         >
-          <Text style={typography.buttonPrimary}>추가</Text>
+          <Text style={typography.button}>추가</Text>
         </Pressable>
       </View>
     </View>
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.purple,
+    backgroundColor: colors.blue,
   },
-  addBtnPressed: { backgroundColor: colors.purplePressed },
+  addBtnPressed: { backgroundColor: colors.bluePressed },
 });

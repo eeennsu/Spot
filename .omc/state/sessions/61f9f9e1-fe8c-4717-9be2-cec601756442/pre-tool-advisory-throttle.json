@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "entries": {
+    "79a93d4a2f8f50b95f852280616242fee1855dc99a3c75211917f55e72e95fae": {
+      "last_emitted_at_ms": 1782574781986,
+      "message": "Use parallel execution for independent tasks. Use run_in_background for long operations (npm install, builds, tests)."
+    },
+    "466399dafa2d20f60587180bad0a07358eb7f2bce724df0ff682f038ad33f5ad": {
+      "last_emitted_at_ms": 1782574645696,
+      "message": "Read multiple files in parallel when possible for faster analysis."
+    },
+    "445ed27a3872b681d98190bae61ccb84954e1bc4e140df5370be958dee776b3a": {
+      "last_emitted_at_ms": 1782574500593,
+      "message": "Verify changes work after editing. Test functionality before marking complete."
+    },
+    "c2078cea4488461b0e634bd853a0e669c3b7783b1c740837fa615c4082df6fa5": {
+      "last_emitted_at_ms": 1782574070551,
+      "message": "Spawning agent: oh-my-claudecode:executor (opus) | Task: Restore data model and FSD"
+    },
+    "972cbfde153230eb4023cbf7783a3fc10eb3e3f760b440106cc496562e703b84": {
+      "last_emitted_at_ms": 1782574028832,
+      "message": "Spawning agent: oh-my-claudecode:designer (inherit) | Task: Rebuild theme to Things 3"
+    },
+    "da80aeb29afa4edf9be8d9906c0b545c64c26a661477d9e14e35c8b3d36d74d4": {
+      "last_emitted_at_ms": 1782573997099,
+      "message": "Spawning agent: oh-my-claudecode:executor (inherit) | Task: Docs and harness fixes"
+    }
+  },
+  "updated_at": "2026-06-27T15:39:41.986Z"
+}

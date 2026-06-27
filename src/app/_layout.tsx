@@ -7,19 +7,19 @@ import { StatusBar } from 'expo-status-bar';
 import {
   useFonts,
   Inter_400Regular,
-  Inter_500Medium,
   Inter_600SemiBold,
+  Inter_700Bold,
 } from '@expo-google-fonts/inter';
 
-import { migrate } from '@/data';
-import { colors } from '@/theme';
+import { migrate } from '@shared/db';
+import { colors } from '@shared/theme';
 
 export default function RootLayout() {
   // theme/typography 가 참조하는 패밀리명으로 Inter 로드.
   const [fontsLoaded] = useFonts({
     'Inter-Regular': Inter_400Regular,
-    'Inter-Medium': Inter_500Medium,
     'Inter-SemiBold': Inter_600SemiBold,
+    'Inter-Bold': Inter_700Bold,
   });
 
   // 빈 DB 생성 + 스키마 초기화(쿼리 전에 1회).

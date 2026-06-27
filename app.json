@@ -6,12 +6,12 @@
     "orientation": "portrait",
     "scheme": "myspot",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "android": {
       "package": "com.myspot.app",
       "adaptiveIcon": {
-        "backgroundColor": "#08090A",
+        "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       }

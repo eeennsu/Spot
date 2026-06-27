@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"ls /Users/wonderround/Documents/Git/porfolio/my-spot/src/shared/theme/ && echo \\\"---\\\" && ls /Users/wonderround/Documents/Git/porfolio/my-spot/src/theme/ 2>&1 && echo \\\"---\\\" && cat /Users...",
+  "error": "Exit code 1\ncolors.ts\nelevation.ts\nindex.ts\nmotion.ts\nradius.ts\nspacing.ts\ntypography.ts\n---\nls: /Users/wonderround/Documents/Git/porfolio/my-spot/src/theme/: No such file or directory",
+  "timestamp": "2026-06-27T15:30:41.014Z",
+  "retry_count": 1
+}
