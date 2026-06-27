@@ -75,11 +75,15 @@
 
 ---
 
-## Phase 5 — PDF 출력 (요구사항 7) ⏳ 대기
+## Phase 5 — PDF 출력 (요구사항 7) ✅ 완료
 
-- [ ] react-native-view-shot 으로 캔버스 캡처
-- [ ] 자재 목록 HTML 생성 → expo-print 로 PDF 출력·공유
-- [ ] **완료 기준**: 현재 평면도가 PDF로 떨어진다.
+- [x] react-native-view-shot(captureRef) 으로 캔버스 캡처(data-uri)
+- [x] 도형별 자재 목록 HTML 생성 → expo-print → expo-sharing 공유
+- [x] Viewer FAB("PDF")로 출력. 제목·일시·평면도 이미지·층별 자재
+- [x] **완료 기준**: 현재 평면도가 PDF로 떨어진다.
+
+> features/pdf 신설(libs/build_html · hooks/useExportPdf). pdf 는 shape+material 합성이라
+> 두 feature repository 직접 사용. 캡처 대상은 보이는 캔버스(FAB 는 캡처 영역 밖).
 
 ---
 

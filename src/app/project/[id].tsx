@@ -46,7 +46,7 @@ export default function ProjectDetailScreen() {
         }}
       />
       {ready ? (
-        <ProjectCanvas projectId={id} focusShapeId={focusId} />
+        <ProjectCanvas projectId={id} focusShapeId={focusId} projectName={project?.name} />
       ) : (
         <View style={styles.loading} />
       )}

@@ -20,7 +20,8 @@
       "expo-router",
       "expo-sqlite",
       "expo-font",
-      "expo-image-picker"
+      "expo-image-picker",
+      "expo-sharing"
     ],
     "experiments": {
       "reactCompiler": true

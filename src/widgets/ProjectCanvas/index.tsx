@@ -19,6 +19,7 @@ import ShapePalette from '@features/shape/ui/ShapePalette';
 import ShapeInspector from '@features/shape/ui/ShapeInspector';
 import MaterialPanel from '@features/material/ui/MaterialPanel';
 import { useProjectMaterials } from '@features/material/hooks/useProjectMaterials';
+import { useExportPdf } from '@features/pdf/hooks/useExportPdf';
 import BottomSheet from '@shared/components/customs/BottomSheet';
 import { colors, spacing, typography } from '@shared/theme';
 
@@ -33,13 +34,17 @@ interface Props {
   onTapMaterialShape?: (shape: IShape) => void;
   /** 검색 결과 이동 대상 도형 — 중앙 정렬 + 하이라이트 + (자재면) 시트 열기 */
   focusShapeId?: string;
+  /** PDF 제목 */
+  projectName?: string;
 }
 
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
 
-export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShapeId }: Props) {
+export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShapeId, projectName }: Props) {
   const insets = useSafeAreaInsets();
+  const canvasRef = useRef<View>(null);
+  const { exportPdf, exporting } = useExportPdf();
   const { shapes, loaded, addShape, updateShape, removeShape } = useShapeCanvas(projectId);
 
   const mode = useEditorStore((s) => s.mode);
@@ -155,6 +160,8 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShap
   return (
     <View style={styles.root}>
       <View
+        ref={canvasRef}
+        collapsable={false}
         style={styles.canvas}
         onLayout={(e) => setCanvasSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
       >
@@ -210,6 +217,19 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShap
         </View>
       ) : null}
 
+      {/* PDF 내보내기(Viewer 전용 FAB) */}
+      {!editable ? (
+        <Pressable
+          onPress={() =>
+            exportPdf({ viewRef: canvasRef, projectId, title: projectName ?? '평면도' })
+          }
+          disabled={exporting}
+          style={[styles.fab, { bottom: insets.bottom + spacing.xl }, exporting && styles.fabDisabled]}
+        >
+          <Text style={styles.fabText}>{exporting ? '...' : 'PDF'}</Text>
+        </Pressable>
+      ) : null}
+
       {/* 자재 패널 바텀시트 — Edit=편집 / Viewer=읽기 */}
       <BottomSheet visible={!!sheetShape} onClose={() => setSheetShape(null)}>
         {sheetShape ? (
@@ -243,4 +263,23 @@ const styles = StyleSheet.create({
     borderTopColor: colors.divider,
     backgroundColor: colors.canvas,
   },
+  fab: {
+    position: 'absolute',
+    right: spacing.xl,
+    minWidth: 56,
+    height: 48,
+    paddingHorizontal: spacing.lg,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.blue,
+    // magicPlus 글로우 토큰과 동일 의도
+    shadowColor: colors.blue,
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  fabDisabled: { opacity: 0.6 },
+  fabText: { ...typography.button, color: colors.canvas },
 });
