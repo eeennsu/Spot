@@ -68,44 +68,6 @@ export const darkColors = {
   darkTextSecondary: '#98989F',
 } as const;
 
-// ── 하위 호환 re-export (C 에이전트가 기존 이름으로 참조할 수 있음) ──
-/**
- * @deprecated 구 Linear 팔레트 호환 shim.
- * statusColors / priority / semantic / lightColors 는 Things 3 에서 개념이 다름.
- * 기존 코드가 참조하는 동안만 유지. 새 코드는 colors 직접 사용.
- */
-export const statusColors = {
-  backlog: colors.textSecondary,
-  todo: colors.textSecondary,
-  inProgress: colors.today,
-  inReview: colors.blue,
-  done: colors.blue,
-  canceled: colors.textTertiary,
-} as const;
-
-export type StatusKey = keyof typeof statusColors;
-
-export const priority = {
-  urgent: colors.today,
-  urgentDot: colors.deadline,
-  bar: colors.textSecondary,
-  barDim: 'rgba(196,196,200,0.4)',
-} as const;
-
-export const semantic = {
-  warning: colors.today,
-  error: colors.deadline,
-  success: colors.blue,
-} as const;
-
-export const lightColors = {
-  canvas: colors.canvas,
-  surface1: colors.surface1,
-  textPrimary: colors.textPrimary,
-  textSecondary: colors.textSecondary,
-  blue: colors.blue,
-} as const;
-
 /**
  * 스크림/오버레이 색 — 사이드바·시트 뒤 부드러운 어둠.
  * DESIGN.md §6: Things 은 스크림도 가볍게 (≈0.2).

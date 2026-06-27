@@ -19,16 +19,21 @@
 
 ---
 
-## Phase 1 — 도형 편집기 코어 (요구사항 1, 도형 7종) ⬅ 다음
+## Phase 1 — 도형 편집기 코어 (요구사항 1, 도형 7종) ✅ 완료
 
-- [ ] Viewer/Edit 토글 (기본 Viewer, 우상단 "편집" 버튼으로 진입)
-- [ ] Edit 모드: 도형 팔레트에서 7종 추가
-  - [ ] 자재 도형 4종: rect / square(1:1 고정) / L(ㄴ자) / circle(1:1 고정)
-  - [ ] 공간 도형 3종: door("문") / office("사무실") / etc("기타", 라벨 편집 가능)
-- [ ] 이동 / 리사이즈 / 회전 (reanimated UI 스레드 처리)
-- [ ] 색 지정 / 삭제 / 별칭(alias) 입력
-- [ ] repository 경유 저장·복원 (hooks → repositories → SQLite)
-- [ ] **완료 기준**: 7종 도형을 배치·조작·색/별칭 지정하고 앱 재실행 후 유지된다.
+- [x] Viewer/Edit 토글 (기본 Viewer, 우상단 "편집" 버튼으로 진입)
+- [x] Edit 모드: 도형 팔레트에서 7종 추가
+  - [x] 자재 도형 4종: rect / square(1:1 고정) / L(ㄴ자, SVG 폴리곤) / circle(1:1 고정)
+  - [x] 공간 도형 3종: door("문") / office("사무실") / etc("기타", 라벨 편집 가능)
+- [x] 이동 / 리사이즈(우하단 핸들) / 회전(상단 핸들·인스펙터 15° 스텝) — reanimated UI 스레드
+- [x] 색 지정 / 삭제 / 별칭(alias) 입력 — ShapeInspector
+- [x] repository 경유 저장·복원 (useShapeCanvas → repositories → SQLite)
+- [x] **완료 기준**: 7종 도형을 배치·조작·색/별칭 지정하고 앱 재실행 후 유지된다.
+
+> 기술결정: 도형 렌더 = 절대배치 Animated.View + View 채움, ㄴ자만 react-native-svg
+> Polygon(viewBox 0~100, preserveAspectRatio none → 리사이즈 라이브 스케일). 캔버스 = pan+pinch.
+> 도형 채움색은 `@shared/theme` palette 토큰(콘텐츠 색). 캔버스 pan 은 blocksExternalGesture 로
+> 도형 조작 중 차단. 알려진 한계: 회전 핸들은 수평 드래그 증분 방식(정밀 각도는 인스펙터 버튼).
 
 ---
 

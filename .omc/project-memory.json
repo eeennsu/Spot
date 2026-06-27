@@ -157,63 +157,111 @@
   },
   "hotPaths": [
     {
+      "path": "src/app/index.tsx",
+      "accessCount": 9,
+      "lastAccessed": 1782575412136,
+      "type": "file"
+    },
+    {
       "path": "CLAUDE.md",
       "accessCount": 8,
       "lastAccessed": 1782574122343,
       "type": "file"
     },
     {
-      "path": "src/app/index.tsx",
-      "accessCount": 8,
-      "lastAccessed": 1782574656568,
-      "type": "file"
-    },
-    {
       "path": "docs/FSD.md",
-      "accessCount": 7,
-      "lastAccessed": 1782574197129,
+      "accessCount": 8,
+      "lastAccessed": 1782575367996,
       "type": "file"
     },
     {
       "path": "src/app/project/[id].tsx",
-      "accessCount": 6,
-      "lastAccessed": 1782574659077,
+      "accessCount": 8,
+      "lastAccessed": 1782576382771,
       "type": "file"
     },
     {
       "path": "docs/PRD.md",
-      "accessCount": 4,
-      "lastAccessed": 1782574203301,
+      "accessCount": 5,
+      "lastAccessed": 1782575367612,
       "type": "file"
     },
     {
       "path": "docs/PHASE_WORKFLOW.md",
-      "accessCount": 4,
-      "lastAccessed": 1782574247519,
+      "accessCount": 5,
+      "lastAccessed": 1782575367743,
       "type": "file"
     },
     {
-      "path": "app.json",
-      "accessCount": 3,
-      "lastAccessed": 1782574232772,
+      "path": "src/shared/theme/typography.ts",
+      "accessCount": 5,
+      "lastAccessed": 1782575390627,
       "type": "file"
     },
     {
       "path": "src/app/_layout.tsx",
+      "accessCount": 5,
+      "lastAccessed": 1782576433071,
+      "type": "file"
+    },
+    {
+      "path": "src/shared/theme/colors.ts",
+      "accessCount": 4,
+      "lastAccessed": 1782575388703,
+      "type": "file"
+    },
+    {
+      "path": "app.json",
+      "accessCount": 4,
+      "lastAccessed": 1782575993705,
+      "type": "file"
+    },
+    {
+      "path": "docs/UIUX.md",
       "accessCount": 3,
-      "lastAccessed": 1782574265619,
+      "lastAccessed": 1782575376892,
+      "type": "file"
+    },
+    {
+      "path": "DESIGN-expo.md",
+      "accessCount": 3,
+      "lastAccessed": 1782575377695,
+      "type": "file"
+    },
+    {
+      "path": "src/shared/db/schema.ts",
+      "accessCount": 3,
+      "lastAccessed": 1782575395818,
+      "type": "file"
+    },
+    {
+      "path": "src/entities/shape/types.ts",
+      "accessCount": 3,
+      "lastAccessed": 1782575397265,
+      "type": "file"
+    },
+    {
+      "path": "tsconfig.json",
+      "accessCount": 3,
+      "lastAccessed": 1782575416851,
+      "type": "file"
+    },
+    {
+      "path": "src/entities/shape/consts.ts",
+      "accessCount": 3,
+      "lastAccessed": 1782576070663,
+      "type": "file"
+    },
+    {
+      "path": "TODO.md",
+      "accessCount": 3,
+      "lastAccessed": 1782576451418,
       "type": "file"
     },
     {
       "path": "DESIGN.md",
       "accessCount": 2,
       "lastAccessed": 1782573626011,
-      "type": "file"
-    },
-    {
-      "path": "DESIGN-expo.md",
-      "accessCount": 2,
-      "lastAccessed": 1782573626119,
       "type": "file"
     },
     {
@@ -226,12 +274,6 @@
       "path": "package.json",
       "accessCount": 2,
       "lastAccessed": 1782573811318,
-      "type": "file"
-    },
-    {
-      "path": "docs/UIUX.md",
-      "accessCount": 2,
-      "lastAccessed": 1782574043135,
       "type": "file"
     },
     {
@@ -361,99 +403,57 @@
       "type": "file"
     },
     {
-      "path": "tsconfig.json",
+      "path": "src/shared/theme/spacing.ts",
       "accessCount": 2,
-      "lastAccessed": 1782574252429,
+      "lastAccessed": 1782575389070,
       "type": "file"
     },
     {
-      "path": "src/shared/db/schema.ts",
+      "path": "src/shared/theme/radius.ts",
       "accessCount": 2,
-      "lastAccessed": 1782574308332,
-      "type": "file"
-    },
-    {
-      "path": "src/entities/shape/types.ts",
-      "accessCount": 2,
-      "lastAccessed": 1782574310474,
-      "type": "file"
-    },
-    {
-      "path": "src/shared/theme/colors.ts",
-      "accessCount": 2,
-      "lastAccessed": 1782574760616,
-      "type": "file"
-    },
-    {
-      "path": "src/shared/theme/typography.ts",
-      "accessCount": 2,
-      "lastAccessed": 1782574761187,
-      "type": "file"
-    },
-    {
-      "path": "src/entities/project/types.ts",
-      "accessCount": 1,
-      "lastAccessed": 1782574117404,
-      "type": "file"
-    },
-    {
-      "path": "src/entities/project/consts.ts",
-      "accessCount": 1,
-      "lastAccessed": 1782574118495,
-      "type": "file"
-    },
-    {
-      "path": "src/entities/shape/consts.ts",
-      "accessCount": 1,
-      "lastAccessed": 1782574125961,
-      "type": "file"
-    },
-    {
-      "path": "src/entities/material/types.ts",
-      "accessCount": 1,
-      "lastAccessed": 1782574128327,
-      "type": "file"
-    },
-    {
-      "path": "src/entities/material/consts.ts",
-      "accessCount": 1,
-      "lastAccessed": 1782574129396,
+      "lastAccessed": 1782575390942,
       "type": "file"
     },
     {
       "path": "src/shared/db/index.ts",
-      "accessCount": 1,
-      "lastAccessed": 1782574150934,
+      "accessCount": 2,
+      "lastAccessed": 1782575396854,
+      "type": "file"
+    },
+    {
+      "path": "src/entities/material/types.ts",
+      "accessCount": 2,
+      "lastAccessed": 1782575398656,
+      "type": "file"
+    },
+    {
+      "path": "src/entities/material/consts.ts",
+      "accessCount": 2,
+      "lastAccessed": 1782575399131,
+      "type": "file"
+    },
+    {
+      "path": "src/entities/project/types.ts",
+      "accessCount": 2,
+      "lastAccessed": 1782575399618,
+      "type": "file"
+    },
+    {
+      "path": "src/entities/project/consts.ts",
+      "accessCount": 2,
+      "lastAccessed": 1782575399908,
       "type": "file"
     },
     {
       "path": "src/shared/utils/util_id.ts",
-      "accessCount": 1,
-      "lastAccessed": 1782574152458,
-      "type": "file"
-    },
-    {
-      "path": "src/shared/theme/spacing.ts",
-      "accessCount": 1,
-      "lastAccessed": 1782574152498,
-      "type": "file"
-    },
-    {
-      "path": "TODO.md",
-      "accessCount": 1,
-      "lastAccessed": 1782574157944,
+      "accessCount": 2,
+      "lastAccessed": 1782575416413,
       "type": "file"
     },
     {
       "path": "src/features/project/libs/map_row.ts",
       "accessCount": 1,
       "lastAccessed": 1782574162017,
-      "type": "file"
-    },
-    {
-      "path": "src/shared/theme/radius.ts",
-      "accessCount": 1,
-      "lastAccessed": 1782574162204,
       "type": "file"
     }
   ],
