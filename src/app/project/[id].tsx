@@ -6,14 +6,19 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 
 import { useProjectGet } from '@features/project/hooks/useProjectGet';
 import { useEditorStore } from '@features/shape/stores/editor';
+import SearchOverlay from '@features/search/ui/SearchOverlay';
 import ProjectCanvas from '@widgets/ProjectCanvas';
 import { colors, spacing, typography } from '@shared/theme';
 
 export default function ProjectDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, focus } = useLocalSearchParams<{ id: string; focus?: string }>();
   const { project } = useProjectGet(id);
 
   const reset = useEditorStore((s) => s.reset);
+
+  // 검색 결과/전역 이동 포커스 도형
+  const [focusId, setFocusId] = useState<string | undefined>(focus);
+  const [searchVisible, setSearchVisible] = useState(false);
 
   // 무거운 캔버스는 한 틱 뒤 마운트(헤더·배경 먼저).
   const [ready, setReady] = useState(false);
@@ -30,14 +35,28 @@ export default function ProjectDetailScreen() {
       <Stack.Screen
         options={{
           title: project?.name ?? '평면도',
-          headerRight: () => <EditToggle />,
+          headerRight: () => (
+            <View style={styles.headerRow}>
+              <Pressable onPress={() => setSearchVisible(true)} hitSlop={10} style={styles.headerBtn}>
+                <Text style={styles.searchIcon}>🔍</Text>
+              </Pressable>
+              <EditToggle />
+            </View>
+          ),
         }}
       />
       {ready ? (
-        <ProjectCanvas projectId={id} />
+        <ProjectCanvas projectId={id} focusShapeId={focusId} />
       ) : (
         <View style={styles.loading} />
       )}
+
+      <SearchOverlay
+        visible={searchVisible}
+        projectId={id}
+        onClose={() => setSearchVisible(false)}
+        onSelect={(r) => setFocusId(r.shapeId)}
+      />
     </View>
   );
 }
@@ -48,7 +67,7 @@ function EditToggle() {
   const toggle = useEditorStore((s) => s.toggleMode);
   const editing = mode === 'edit';
   return (
-    <Pressable onPress={toggle} hitSlop={10} style={styles.toggle}>
+    <Pressable onPress={toggle} hitSlop={10} style={styles.headerBtn}>
       <Text style={[typography.button, { color: colors.blue }]}>
         {editing ? '완료' : '편집'}
       </Text>
@@ -59,9 +78,11 @@ function EditToggle() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.canvas },
   loading: { flex: 1, backgroundColor: colors.canvas },
-  toggle: {
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  headerBtn: {
     minHeight: 44,
     justifyContent: 'center',
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.xs,
   },
+  searchIcon: { fontSize: 18 },
 });

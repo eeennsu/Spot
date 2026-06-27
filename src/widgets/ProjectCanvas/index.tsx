@@ -7,6 +7,7 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -30,12 +31,14 @@ interface Props {
   projectId: string;
   /** 뷰어에서 자재 도형 탭(Phase 2~3 바텀시트). Phase 1 은 선택만. */
   onTapMaterialShape?: (shape: IShape) => void;
+  /** 검색 결과 이동 대상 도형 — 중앙 정렬 + 하이라이트 + (자재면) 시트 열기 */
+  focusShapeId?: string;
 }
 
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
 
-export default function ProjectCanvas({ projectId, onTapMaterialShape }: Props) {
+export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShapeId }: Props) {
   const insets = useSafeAreaInsets();
   const { shapes, loaded, addShape, updateShape, removeShape } = useShapeCanvas(projectId);
 
@@ -69,6 +72,26 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape }: Props) 
   useEffect(() => {
     if (!sheetShape) reloadMaterials();
   }, [sheetShape, reloadMaterials]);
+
+  // 캔버스 크기(중앙 정렬 계산용) + 검색 하이라이트
+  const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 });
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+
+  // 검색 결과 포커스: 중앙 정렬 + 하이라이트 + 자재면 시트.
+  useEffect(() => {
+    if (!focusShapeId || !loaded || canvasSize.w === 0) return;
+    const target = shapes.find((s) => s.id === focusShapeId);
+    if (!target) return;
+    scale.value = withTiming(1, { duration: 220 });
+    panX.value = withTiming(canvasSize.w / 2 - (target.x + target.width / 2), { duration: 260 });
+    panY.value = withTiming(canvasSize.h / 2 - (target.y + target.height / 2), { duration: 260 });
+    setHighlightId(target.id);
+    if (target.category === 'material') setSheetShape(target);
+    const t = setTimeout(() => setHighlightId(null), 1800);
+    return () => clearTimeout(t);
+    // panX/panY/scale 는 shared value(안정 참조)라 deps 제외
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusShapeId, loaded, canvasSize.w, canvasSize.h, shapes]);
 
   const captionOf = (shape: IShape): string | undefined => {
     if (shape.category !== 'material') return undefined;
@@ -131,7 +154,10 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape }: Props) 
 
   return (
     <View style={styles.root}>
-      <View style={styles.canvas}>
+      <View
+        style={styles.canvas}
+        onLayout={(e) => setCanvasSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
+      >
         <GestureDetector gesture={canvasGesture}>
           <Animated.View style={StyleSheet.absoluteFill} />
         </GestureDetector>
@@ -149,6 +175,7 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape }: Props) 
               onTapViewer={onTapViewer}
               onCommit={updateShape}
               caption={captionOf(shape)}
+              highlighted={highlightId === shape.id}
             />
           ))}
         </Animated.View>

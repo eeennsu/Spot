@@ -35,6 +35,8 @@ interface Props {
   onCommit: (id: string, patch: Partial<IShape>) => void;
   /** Viewer 에서 자재 도형에 표시할 캡션(대표 자재명 + N) */
   caption?: string;
+  /** 검색 결과 이동 시 일시 하이라이트 */
+  highlighted?: boolean;
 }
 
 const HANDLE = 26; // 핸들 지름(터치 타겟 위해 hitSlop 추가)
@@ -49,6 +51,7 @@ export default function ShapeView({
   onTapViewer,
   onCommit,
   caption,
+  highlighted,
 }: Props) {
   const tx = useSharedValue(shape.x);
   const ty = useSharedValue(shape.y);
@@ -152,8 +155,8 @@ export default function ShapeView({
         </View>
       ) : null}
 
-      {/* 선택 외곽선 */}
-      {selected ? <View style={styles.outline} pointerEvents="none" /> : null}
+      {/* 선택/하이라이트 외곽선 */}
+      {selected || highlighted ? <View style={styles.outline} pointerEvents="none" /> : null}
 
       {/* 핸들 */}
       {showHandles ? (

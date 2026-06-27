@@ -158,8 +158,14 @@
   "hotPaths": [
     {
       "path": "src/app/index.tsx",
+      "accessCount": 10,
+      "lastAccessed": 1782577276637,
+      "type": "file"
+    },
+    {
+      "path": "src/app/project/[id].tsx",
       "accessCount": 9,
-      "lastAccessed": 1782575412136,
+      "lastAccessed": 1782577253281,
       "type": "file"
     },
     {
@@ -175,9 +181,9 @@
       "type": "file"
     },
     {
-      "path": "src/app/project/[id].tsx",
-      "accessCount": 8,
-      "lastAccessed": 1782576382771,
+      "path": "TODO.md",
+      "accessCount": 6,
+      "lastAccessed": 1782577300041,
       "type": "file"
     },
     {
@@ -208,12 +214,6 @@
       "path": "app.json",
       "accessCount": 5,
       "lastAccessed": 1782576694246,
-      "type": "file"
-    },
-    {
-      "path": "TODO.md",
-      "accessCount": 5,
-      "lastAccessed": 1782577016628,
       "type": "file"
     },
     {
