@@ -1,6 +1,6 @@
 // 프로젝트 캔버스 위젯 — Phase 1: pan/zoom + 도형 7종 배치·조작.
 // shape feature 합성. 데이터는 features/shape/hooks 경유(repository 직접 호출 없음).
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -17,6 +17,7 @@ import ShapeView from '@features/shape/ui/ShapeView';
 import ShapePalette from '@features/shape/ui/ShapePalette';
 import ShapeInspector from '@features/shape/ui/ShapeInspector';
 import MaterialPanel from '@features/material/ui/MaterialPanel';
+import { useProjectMaterials } from '@features/material/hooks/useProjectMaterials';
 import BottomSheet from '@shared/components/customs/BottomSheet';
 import { colors, spacing, typography } from '@shared/theme';
 
@@ -60,6 +61,21 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape }: Props) 
 
   // 자재 패널(바텀시트) 대상 도형
   const [sheetShape, setSheetShape] = useState<IShape | null>(null);
+
+  // Viewer 캔버스 라벨용 자재명 맵
+  const { namesByShape, reload: reloadMaterials } = useProjectMaterials(projectId);
+
+  // 시트 닫힘(편집 반영) 시 자재명 갱신.
+  useEffect(() => {
+    if (!sheetShape) reloadMaterials();
+  }, [sheetShape, reloadMaterials]);
+
+  const captionOf = (shape: IShape): string | undefined => {
+    if (shape.category !== 'material') return undefined;
+    const names = namesByShape[shape.id];
+    if (!names || names.length === 0) return undefined;
+    return names.length > 1 ? `${names[0]}  +${names.length - 1}` : names[0];
+  };
 
   const pan = Gesture.Pan()
     .withRef(canvasPanRef as never)
@@ -132,6 +148,7 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape }: Props) 
               onSelect={select}
               onTapViewer={onTapViewer}
               onCommit={updateShape}
+              caption={captionOf(shape)}
             />
           ))}
         </Animated.View>

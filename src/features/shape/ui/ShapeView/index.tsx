@@ -16,7 +16,7 @@ import {
   isAspectLocked,
 } from '@entities/shape/consts';
 import type { IShape } from '@entities/shape/types';
-import { colors, palette, radius, spacing, typography } from '@shared/theme';
+import { colors, palette, pickOnFill, radius, spacing, typography } from '@shared/theme';
 
 import ShapeFill from '../ShapeFill';
 
@@ -33,6 +33,8 @@ interface Props {
   onSelect: (id: string) => void;
   onTapViewer: (shape: IShape) => void;
   onCommit: (id: string, patch: Partial<IShape>) => void;
+  /** Viewer 에서 자재 도형에 표시할 캡션(대표 자재명 + N) */
+  caption?: string;
 }
 
 const HANDLE = 26; // 핸들 지름(터치 타겟 위해 hitSlop 추가)
@@ -46,6 +48,7 @@ export default function ShapeView({
   onSelect,
   onTapViewer,
   onCommit,
+  caption,
 }: Props) {
   const tx = useSharedValue(shape.x);
   const ty = useSharedValue(shape.y);
@@ -133,6 +136,15 @@ export default function ShapeView({
         </Animated.View>
       </GestureDetector>
 
+      {/* Viewer 자재명 캡션 */}
+      {!editable && caption ? (
+        <View style={styles.caption} pointerEvents="none">
+          <Text style={[typography.metadata, { color: pickOnFill(shape.color) }]} numberOfLines={2}>
+            {caption}
+          </Text>
+        </View>
+      ) : null}
+
       {/* 별칭 배지 */}
       {shape.alias ? (
         <View style={styles.aliasBadge} pointerEvents="none">
@@ -174,6 +186,16 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: palette.handle,
     borderRadius: radius.soft,
+  },
+  caption: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xs,
   },
   aliasBadge: {
     position: 'absolute',
