@@ -37,13 +37,17 @@
 
 ---
 
-## Phase 2 — 자재 + 층(랙 레이어) (요구사항 2) ⏳ 대기
+## Phase 2 — 자재 + 층(랙 레이어) (요구사항 2) ✅ 완료
 
-- [ ] 자재 도형 탭 → 바텀시트 열기
-- [ ] 자재 추가: 이름(필수) / 설명(옵션) / 이미지(옵션, expo-file-system 로컬 복사)
-- [ ] 한 도형에 자재 여러 개 = 층(layerOrder)으로 쌓기
-- [ ] 층 순서 변경 / 자재 수정 / 삭제
-- [ ] **완료 기준**: 한 랙(도형)에 자재를 층층이 등록·정렬하고 사진이 보이며 재실행 후 유지된다.
+- [x] 자재 도형 탭 → 바텀시트(공용 BottomSheet) — Edit: 인스펙터 "자재 층 관리" / Viewer: 직접
+- [x] 자재 추가: 이름(필수) / 설명(옵션) / 이미지(옵션, expo-file-system 로컬 복사)
+- [x] 한 도형에 자재 여러 개 = 층(layerOrder)으로 쌓기 (+ 층 추가)
+- [x] 층 순서 변경(▲▼) / 자재 수정(인라인) / 삭제(이미지 로컬본 정리)
+- [x] **완료 기준**: 한 랙에 자재 층층이 등록·정렬, 사진 표시, 재실행 후 유지.
+
+> 추가: React Compiler 활성화(app.json experiments.reactCompiler) — 수동 memo 불필요.
+> expo-image-picker 플러그인 등록. 이미지는 documentDirectory/materials/ 로 복사, DB엔 경로만.
+> 공용 컴포넌트 신설: BottomSheet(Modal+reanimated), LocalImage(사진 유실 플레이스홀더).
 
 ---
 

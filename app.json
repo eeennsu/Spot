@@ -19,7 +19,11 @@
     "plugins": [
       "expo-router",
       "expo-sqlite",
-      "expo-font"
-    ]
+      "expo-font",
+      "expo-image-picker"
+    ],
+    "experiments": {
+      "reactCompiler": true
+    }
   }
 }

@@ -205,15 +205,21 @@
       "type": "file"
     },
     {
+      "path": "app.json",
+      "accessCount": 5,
+      "lastAccessed": 1782576694246,
+      "type": "file"
+    },
+    {
       "path": "src/shared/theme/colors.ts",
       "accessCount": 4,
       "lastAccessed": 1782575388703,
       "type": "file"
     },
     {
-      "path": "app.json",
+      "path": "TODO.md",
       "accessCount": 4,
-      "lastAccessed": 1782575993705,
+      "lastAccessed": 1782576866635,
       "type": "file"
     },
     {
@@ -250,12 +256,6 @@
       "path": "src/entities/shape/consts.ts",
       "accessCount": 3,
       "lastAccessed": 1782576070663,
-      "type": "file"
-    },
-    {
-      "path": "TODO.md",
-      "accessCount": 3,
-      "lastAccessed": 1782576451418,
       "type": "file"
     },
     {

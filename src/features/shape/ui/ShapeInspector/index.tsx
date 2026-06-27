@@ -10,9 +10,11 @@ interface Props {
   onUpdate: (patch: Partial<IShape>) => void;
   onDelete: () => void;
   onClose: () => void;
+  /** 자재 도형에서 자재 패널 열기 */
+  onManageMaterials?: () => void;
 }
 
-export default function ShapeInspector({ shape, onUpdate, onDelete, onClose }: Props) {
+export default function ShapeInspector({ shape, onUpdate, onDelete, onClose, onManageMaterials }: Props) {
   const isSpace = shape.category === 'space';
   const labelEditable = shape.type === 'etc';
 
@@ -82,6 +84,13 @@ export default function ShapeInspector({ shape, onUpdate, onDelete, onClose }: P
         </View>
       )}
 
+      {/* 자재 관리 (자재 도형만) */}
+      {!isSpace && onManageMaterials ? (
+        <Pressable onPress={onManageMaterials} style={styles.manageBtn}>
+          <Text style={[typography.button, { color: colors.blue }]}>자재 층 관리 →</Text>
+        </Pressable>
+      ) : null}
+
       {/* 회전 + 삭제 */}
       <View style={styles.actionRow}>
         <Pressable onPress={() => rotate(-SHAPE_ROTATE_STEP)} style={styles.actionBtn}>
@@ -128,6 +137,13 @@ const styles = StyleSheet.create({
     borderColor: colors.divider,
     backgroundColor: colors.surface1,
     ...typography.body,
+  },
+  manageBtn: {
+    minHeight: 48,
+    borderRadius: radius.standard,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.blueTint,
   },
   actionRow: { flexDirection: 'row', gap: spacing.sm, paddingBottom: spacing.sm },
   actionBtn: {

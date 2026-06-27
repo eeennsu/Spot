@@ -1,6 +1,6 @@
 // 프로젝트 캔버스 위젯 — Phase 1: pan/zoom + 도형 7종 배치·조작.
 // shape feature 합성. 데이터는 features/shape/hooks 경유(repository 직접 호출 없음).
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -16,7 +16,14 @@ import { useEditorStore } from '@features/shape/stores/editor';
 import ShapeView from '@features/shape/ui/ShapeView';
 import ShapePalette from '@features/shape/ui/ShapePalette';
 import ShapeInspector from '@features/shape/ui/ShapeInspector';
+import MaterialPanel from '@features/material/ui/MaterialPanel';
+import BottomSheet from '@shared/components/customs/BottomSheet';
 import { colors, spacing, typography } from '@shared/theme';
+
+/** 시트 헤더 타이틀 — 별칭 > 라벨 > 기본명. */
+function shapeTitle(shape: IShape): string {
+  return shape.alias || shape.label || (shape.category === 'material' ? '자재 랙' : '공간');
+}
 
 interface Props {
   projectId: string;
@@ -50,6 +57,9 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape }: Props) 
   const startScale = useSharedValue(1);
 
   const canvasPanRef = useRef<unknown>(undefined);
+
+  // 자재 패널(바텀시트) 대상 도형
+  const [sheetShape, setSheetShape] = useState<IShape | null>(null);
 
   const pan = Gesture.Pan()
     .withRef(canvasPanRef as never)
@@ -90,7 +100,9 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape }: Props) 
   }));
 
   const onTapViewer = (shape: IShape) => {
-    if (shape.category === 'material') onTapMaterialShape?.(shape);
+    if (shape.category !== 'material') return;
+    onTapMaterialShape?.(shape);
+    setSheetShape(shape); // 읽기전용 자재 패널
   };
 
   const onDelete = async () => {
@@ -144,6 +156,7 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape }: Props) 
               onUpdate={(patch) => updateShape(selectedShape.id, patch)}
               onDelete={onDelete}
               onClose={() => select(null)}
+              onManageMaterials={() => setSheetShape(selectedShape)}
             />
           ) : (
             <View style={styles.paletteWrap}>
@@ -152,6 +165,17 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape }: Props) 
           )}
         </View>
       ) : null}
+
+      {/* 자재 패널 바텀시트 — Edit=편집 / Viewer=읽기 */}
+      <BottomSheet visible={!!sheetShape} onClose={() => setSheetShape(null)}>
+        {sheetShape ? (
+          <MaterialPanel
+            shapeId={sheetShape.id}
+            title={shapeTitle(sheetShape)}
+            editable={editable}
+          />
+        ) : null}
+      </BottomSheet>
     </View>
   );
 }
