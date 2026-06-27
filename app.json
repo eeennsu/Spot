@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "my-spot",
+    "slug": "my-spot",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "myspot",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "android": {
+      "package": "com.myspot.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#08090A",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-font"
+    ]
+  }
+}

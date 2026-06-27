@@ -1,0 +1,12 @@
+{
+  "active": true,
+  "current_phase": "planner_draft",
+  "task_description": "Phase 1 (도형 편집기 코어) implementation plan — Expo/Android shape editor MVP",
+  "started_at": "2026-06-27",
+  "_meta": {
+    "mode": "ralplan",
+    "sessionId": "2fdd79bb-5028-47ca-9e49-1afbf0335378",
+    "updatedAt": "2026-06-27T13:20:41.526Z",
+    "updatedBy": "state_write_tool"
+  }
+}
