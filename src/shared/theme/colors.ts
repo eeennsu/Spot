@@ -48,6 +48,8 @@ export const colors = {
   // ── 시맨틱 ────────────────────────────────────
   /** 기한 초과 태스크·마감 플래그 (DESIGN.md §2 Deadline Red) */
   deadline: '#FF3B30',
+  /** 성공·정답 피드백 (시맨틱 그린, iOS systemGreen 계열) */
+  success: '#34C759',
   /** 체크박스 테두리 미완료 (= textTertiary) (DESIGN.md §2 Checkbox Border) */
   checkboxBorder: '#C7C7CC',
 } as const;

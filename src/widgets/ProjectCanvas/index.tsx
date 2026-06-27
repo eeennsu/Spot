@@ -20,6 +20,11 @@ import ShapeInspector from '@features/shape/ui/ShapeInspector';
 import MaterialPanel from '@features/material/ui/MaterialPanel';
 import { useProjectMaterials } from '@features/material/hooks/useProjectMaterials';
 import { useExportPdf } from '@features/pdf/hooks/useExportPdf';
+import { useLearnData } from '@features/learn/hooks/useLearnData';
+import { useLearnStore } from '@features/learn/stores/learn';
+import LearnBar from '@features/learn/ui/LearnBar';
+import LearnStart from '@features/learn/ui/LearnStart';
+import type { ILearnType } from '@features/learn/types';
 import BottomSheet from '@shared/components/customs/BottomSheet';
 import { colors, spacing, typography } from '@shared/theme';
 
@@ -72,6 +77,32 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShap
 
   // Viewer 캔버스 라벨용 자재명 맵
   const { namesByShape, reload: reloadMaterials } = useProjectMaterials(projectId);
+
+  // 학습 모드
+  const { count: learnCount, reload: reloadQuiz } = useLearnData(projectId);
+  const learnActive = useLearnStore((s) => s.active);
+  const learnType = useLearnStore((s) => s.type);
+  const learnIndex = useLearnStore((s) => s.index);
+  const learnNameQs = useLearnStore((s) => s.name);
+  const startLearnStore = useLearnStore((s) => s.start);
+  const answerPosition = useLearnStore((s) => s.answerPosition);
+  const stopLearn = useLearnStore((s) => s.stop);
+  const [learnChooser, setLearnChooser] = useState(false);
+
+  // 학습 중 편집 진입 시 학습 종료(혼선 방지).
+  useEffect(() => {
+    if (editable && learnActive) stopLearn();
+  }, [editable, learnActive, stopLearn]);
+
+  const learnTargetShapeId =
+    learnActive && learnType === 'name' ? learnNameQs[learnIndex]?.shapeId : undefined;
+
+  const startLearn = async (type: ILearnType) => {
+    const set = await reloadQuiz();
+    setSheetShape(null);
+    setLearnChooser(false);
+    startLearnStore(type, set.position, set.name);
+  };
 
   // 시트 닫힘(편집 반영) 시 자재명 갱신.
   useEffect(() => {
@@ -144,6 +175,11 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShap
   }));
 
   const onTapViewer = (shape: IShape) => {
+    // 학습 위치 맞히기: 탭이 곧 응답(시트 열지 않음)
+    if (learnActive) {
+      if (learnType === 'position') answerPosition(shape.id);
+      return;
+    }
     if (shape.category !== 'material') return;
     onTapMaterialShape?.(shape);
     setSheetShape(shape); // 읽기전용 자재 패널
@@ -181,8 +217,8 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShap
               onSelect={select}
               onTapViewer={onTapViewer}
               onCommit={updateShape}
-              caption={captionOf(shape)}
-              highlighted={highlightId === shape.id}
+              caption={learnActive ? undefined : captionOf(shape)}
+              highlighted={highlightId === shape.id || learnTargetShapeId === shape.id}
             />
           ))}
         </Animated.View>
@@ -217,18 +253,37 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShap
         </View>
       ) : null}
 
-      {/* PDF 내보내기(Viewer 전용 FAB) */}
-      {!editable ? (
-        <Pressable
-          onPress={() =>
-            exportPdf({ viewRef: canvasRef, projectId, title: projectName ?? '평면도' })
-          }
-          disabled={exporting}
-          style={[styles.fab, { bottom: insets.bottom + spacing.xl }, exporting && styles.fabDisabled]}
-        >
-          <Text style={styles.fabText}>{exporting ? '...' : 'PDF'}</Text>
-        </Pressable>
+      {/* Viewer FAB — 학습 + PDF (학습 진행 중엔 숨김) */}
+      {!editable && !learnActive ? (
+        <>
+          <Pressable
+            onPress={() => setLearnChooser(true)}
+            style={[styles.fab, styles.fabSecondary, { bottom: insets.bottom + spacing.xl + 60 }]}
+          >
+            <Text style={[styles.fabText, { color: colors.blue }]}>학습</Text>
+          </Pressable>
+          <Pressable
+            onPress={() =>
+              exportPdf({ viewRef: canvasRef, projectId, title: projectName ?? '평면도' })
+            }
+            disabled={exporting}
+            style={[styles.fab, { bottom: insets.bottom + spacing.xl }, exporting && styles.fabDisabled]}
+          >
+            <Text style={styles.fabText}>{exporting ? '...' : 'PDF'}</Text>
+          </Pressable>
+        </>
       ) : null}
+
+      {/* 학습 하단 바 */}
+      {learnActive ? <LearnBar onRestart={() => startLearn(learnType)} /> : null}
+
+      {/* 학습 시작 선택 시트 */}
+      <LearnStart
+        visible={learnChooser}
+        count={learnCount}
+        onClose={() => setLearnChooser(false)}
+        onPick={startLearn}
+      />
 
       {/* 자재 패널 바텀시트 — Edit=편집 / Viewer=읽기 */}
       <BottomSheet visible={!!sheetShape} onClose={() => setSheetShape(null)}>
@@ -279,6 +334,13 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 8 },
     elevation: 8,
+  },
+  fabSecondary: {
+    backgroundColor: colors.canvas,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    shadowOpacity: 0.12,
+    shadowColor: colors.textPrimary,
   },
   fabDisabled: { opacity: 0.6 },
   fabText: { ...typography.button, color: colors.canvas },

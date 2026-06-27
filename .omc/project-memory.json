@@ -157,15 +157,15 @@
   },
   "hotPaths": [
     {
-      "path": "src/app/index.tsx",
-      "accessCount": 10,
-      "lastAccessed": 1782577276637,
+      "path": "src/app/project/[id].tsx",
+      "accessCount": 13,
+      "lastAccessed": 1782578364933,
       "type": "file"
     },
     {
-      "path": "src/app/project/[id].tsx",
+      "path": "src/app/index.tsx",
       "accessCount": 10,
-      "lastAccessed": 1782577495947,
+      "lastAccessed": 1782577276637,
       "type": "file"
     },
     {
@@ -182,8 +182,8 @@
     },
     {
       "path": "TODO.md",
-      "accessCount": 7,
-      "lastAccessed": 1782577572646,
+      "accessCount": 8,
+      "lastAccessed": 1782578435868,
       "type": "file"
     },
     {
@@ -218,8 +218,8 @@
     },
     {
       "path": "src/shared/theme/colors.ts",
-      "accessCount": 4,
-      "lastAccessed": 1782575388703,
+      "accessCount": 5,
+      "lastAccessed": 1782577668095,
       "type": "file"
     },
     {

@@ -6,6 +6,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 
 import { useProjectGet } from '@features/project/hooks/useProjectGet';
 import { useEditorStore } from '@features/shape/stores/editor';
+import { useLearnStore } from '@features/learn/stores/learn';
 import SearchOverlay from '@features/search/ui/SearchOverlay';
 import ProjectCanvas from '@widgets/ProjectCanvas';
 import { colors, spacing, typography } from '@shared/theme';
@@ -15,6 +16,7 @@ export default function ProjectDetailScreen() {
   const { project } = useProjectGet(id);
 
   const reset = useEditorStore((s) => s.reset);
+  const stopLearn = useLearnStore((s) => s.stop);
 
   // 검색 결과/전역 이동 포커스 도형
   const [focusId, setFocusId] = useState<string | undefined>(focus);
@@ -27,8 +29,13 @@ export default function ProjectDetailScreen() {
     return () => clearTimeout(t);
   }, []);
 
-  // 화면 떠날 때 편집기 상태 초기화.
-  useEffect(() => reset, [reset]);
+  // 화면 떠날 때 편집기·학습 상태 초기화.
+  useEffect(() => {
+    return () => {
+      reset();
+      stopLearn();
+    };
+  }, [reset, stopLearn]);
 
   return (
     <View style={styles.root}>
