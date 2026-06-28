@@ -1,3 +1,12 @@
+// ── 통합 theme 객체 ────────────────────────────────────────────────
+import { colors, darkColors, scrim } from './colors';
+import { elevation, overlay } from './elevation';
+import { duration, spring, motion, haptics } from './motion';
+import { palette } from './palette';
+import { radius } from './radius';
+import { spacing, layout } from './spacing';
+import { typography, fontFamily } from './typography';
+
 // Things 3 테마 배럴. 출처: DESIGN.md / DESIGN-expo.md.
 // 교체 이력: Linear 다크 팔레트(src/theme/) → Things 3 라이트 팔레트(src/shared/theme/).
 
@@ -21,15 +30,6 @@ export type { DurationToken, SpringToken } from './motion';
 
 export { palette, pickOnFill } from './palette';
 export type { ShapeFill } from './palette';
-
-// ── 통합 theme 객체 ────────────────────────────────────────────────
-import { colors, darkColors, scrim } from './colors';
-import { typography, fontFamily } from './typography';
-import { spacing, layout } from './spacing';
-import { radius } from './radius';
-import { elevation, overlay } from './elevation';
-import { duration, spring, motion, haptics } from './motion';
-import { palette } from './palette';
 
 /**
  * 통합 토큰 객체 — 한 번에 쓸 때.

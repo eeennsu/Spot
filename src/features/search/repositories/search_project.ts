@@ -1,5 +1,6 @@
 // 프로젝트 내 검색 — 현재 프로젝트의 자재 이름 + 도형 별칭(부분 일치).
 import { getDb } from '@shared/db';
+
 import { MATERIAL_TABLE } from '@entities/material/consts';
 import { SHAPE_TABLE } from '@entities/shape/consts';
 
@@ -44,7 +45,7 @@ export default async function repoSearchProject(
   );
 
   return [
-    ...materials.map<ISearchResult>((r) => ({
+    ...materials.map<ISearchResult>(r => ({
       key: `m:${r.id}`,
       projectId,
       shapeId: r.shape_id,
@@ -52,7 +53,7 @@ export default async function repoSearchProject(
       matched: r.name,
       kind: 'material',
     })),
-    ...aliases.map<ISearchResult>((r) => ({
+    ...aliases.map<ISearchResult>(r => ({
       key: `a:${r.id}`,
       projectId,
       shapeId: r.id,

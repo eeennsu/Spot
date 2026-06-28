@@ -1,5 +1,6 @@
 // 프로젝트별 도형 목록 — SQLite 직접 접근(repository 만 허용).
 import { getDb } from '@shared/db';
+
 import { SHAPE_TABLE } from '@entities/shape/consts';
 import type { IShape } from '@entities/shape/types';
 

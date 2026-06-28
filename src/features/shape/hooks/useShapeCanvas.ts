@@ -2,18 +2,15 @@
 // feature 훅이므로 repository 직접 호출 허용(컴포넌트는 이 훅만 사용).
 import { useCallback, useEffect, useState } from 'react';
 
-import {
-  SHAPE_CATALOG,
-  shapeCatalogOf,
-  type IShapeType,
-} from '@entities/shape/consts';
-import type { IShape } from '@entities/shape/types';
-import { utilCreateId } from '@shared/utils/util_id';
 import { palette } from '@shared/theme';
+import { utilCreateId } from '@shared/utils/util_id';
 
+import { SHAPE_CATALOG, shapeCatalogOf, type IShapeType } from '@entities/shape/consts';
+import type { IShape } from '@entities/shape/types';
+
+import repoShapeDelete from '../repositories/delete_shape';
 import repoShapeList from '../repositories/list_shapes';
 import repoShapeSave from '../repositories/save_shape';
-import repoShapeDelete from '../repositories/delete_shape';
 
 /** 신규 도형 배치 시작 좌표(겹침 방지 계단식) */
 const SPAWN_BASE = { x: 40, y: 40 };
@@ -50,7 +47,7 @@ export function useShapeCanvas(projectId: string) {
         color: meta.category === 'space' ? palette.spaceFill : palette.defaultMaterialFill,
         label: meta.defaultLabel,
       };
-      setShapes((prev) => [...prev, shape]);
+      setShapes(prev => [...prev, shape]);
       await repoShapeSave(shape);
       return shape;
     },
@@ -60,8 +57,8 @@ export function useShapeCanvas(projectId: string) {
   /** 부분 갱신 + 영속(제스처 종료·인스펙터 편집 커밋) */
   const updateShape = useCallback(async (id: string, patch: Partial<IShape>) => {
     let next: IShape | undefined;
-    setShapes((prev) =>
-      prev.map((s) => {
+    setShapes(prev =>
+      prev.map(s => {
         if (s.id !== id) return s;
         next = { ...s, ...patch };
         return next;
@@ -71,7 +68,7 @@ export function useShapeCanvas(projectId: string) {
   }, []);
 
   const removeShape = useCallback(async (id: string) => {
-    setShapes((prev) => prev.filter((s) => s.id !== id));
+    setShapes(prev => prev.filter(s => s.id !== id));
     await repoShapeDelete(id);
   }, []);
 

@@ -52,6 +52,12 @@ export const colors = {
   success: '#34C759',
   /** 체크박스 테두리 미완료 (= textTertiary) (DESIGN.md §2 Checkbox Border) */
   checkboxBorder: '#C7C7CC',
+
+  // ── 유틸 ──────────────────────────────────────
+  /** 투명 — 테두리 자리 유지용(선택 전 swatch 등) */
+  transparent: 'transparent',
+  /** 시트 그림자색 (DESIGN.md §6 Sheet: rgba(0,0,0,0.12)) */
+  sheetShadow: 'rgba(0,0,0,0.12)',
 } as const;
 
 export type ThingsColor = keyof typeof colors;

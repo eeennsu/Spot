@@ -1,5 +1,6 @@
 // 도형 저장(생성/갱신) — SQLite 직접 접근(repository 만 허용). INSERT OR REPLACE.
 import { getDb } from '@shared/db';
+
 import { SHAPE_TABLE } from '@entities/shape/consts';
 import type { IShape } from '@entities/shape/types';
 

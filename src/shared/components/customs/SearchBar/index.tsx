@@ -10,7 +10,12 @@ interface Props {
   autoFocus?: boolean;
 }
 
-export default function SearchBar({ value, onChangeText, placeholder = '자재 이름·별칭 검색', autoFocus }: Props) {
+export default function SearchBar({
+  value,
+  onChangeText,
+  placeholder = '자재 이름·별칭 검색',
+  autoFocus,
+}: Props) {
   return (
     <View style={styles.wrap}>
       <Text style={styles.icon}>🔍</Text>
@@ -22,7 +27,7 @@ export default function SearchBar({ value, onChangeText, placeholder = '자재 �
         placeholderTextColor={colors.textTertiary}
         selectionColor={colors.blue}
         autoFocus={autoFocus}
-        returnKeyType="search"
+        returnKeyType='search'
         autoCorrect={false}
       />
       {value.length > 0 ? (

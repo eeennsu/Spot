@@ -11,22 +11,24 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { IShape } from '@entities/shape/types';
-import { useShapeCanvas } from '@features/shape/hooks/useShapeCanvas';
-import { useEditorStore } from '@features/shape/stores/editor';
-import ShapeView from '@features/shape/ui/ShapeView';
-import ShapePalette from '@features/shape/ui/ShapePalette';
-import ShapeInspector from '@features/shape/ui/ShapeInspector';
-import MaterialPanel from '@features/material/ui/MaterialPanel';
-import { useProjectMaterials } from '@features/material/hooks/useProjectMaterials';
-import { useExportPdf } from '@features/pdf/hooks/useExportPdf';
-import { useLearnData } from '@features/learn/hooks/useLearnData';
-import { useLearnStore } from '@features/learn/stores/learn';
-import LearnBar from '@features/learn/ui/LearnBar';
-import LearnStart from '@features/learn/ui/LearnStart';
-import type { ILearnType } from '@features/learn/types';
 import BottomSheet from '@shared/components/customs/BottomSheet';
 import { colors, spacing, typography } from '@shared/theme';
+
+import type { IShape } from '@entities/shape/types';
+
+import { useLearnData } from '@features/learn/hooks/useLearnData';
+import { useLearnStore } from '@features/learn/stores/learn';
+import type { ILearnType } from '@features/learn/types';
+import LearnBar from '@features/learn/ui/LearnBar';
+import LearnStart from '@features/learn/ui/LearnStart';
+import { useProjectMaterials } from '@features/material/hooks/useProjectMaterials';
+import MaterialPanel from '@features/material/ui/MaterialPanel';
+import { useExportPdf } from '@features/pdf/hooks/useExportPdf';
+import { useShapeCanvas } from '@features/shape/hooks/useShapeCanvas';
+import { useEditorStore } from '@features/shape/stores/editor';
+import ShapeInspector from '@features/shape/ui/ShapeInspector';
+import ShapePalette from '@features/shape/ui/ShapePalette';
+import ShapeView from '@features/shape/ui/ShapeView';
 
 /** 시트 헤더 타이틀 — 별칭 > 라벨 > 기본명. */
 function shapeTitle(shape: IShape): string {
@@ -46,19 +48,24 @@ interface Props {
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
 
-export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShapeId, projectName }: Props) {
+export default function ProjectCanvas({
+  projectId,
+  onTapMaterialShape,
+  focusShapeId,
+  projectName,
+}: Props) {
   const insets = useSafeAreaInsets();
   const canvasRef = useRef<View>(null);
   const { exportPdf, exporting } = useExportPdf();
   const { shapes, loaded, addShape, updateShape, removeShape } = useShapeCanvas(projectId);
 
-  const mode = useEditorStore((s) => s.mode);
-  const selectedId = useEditorStore((s) => s.selectedShapeId);
-  const select = useEditorStore((s) => s.select);
+  const mode = useEditorStore(s => s.mode);
+  const selectedId = useEditorStore(s => s.selectedShapeId);
+  const select = useEditorStore(s => s.select);
   const editable = mode === 'edit';
 
   const selectedShape = useMemo(
-    () => shapes.find((s) => s.id === selectedId) ?? null,
+    () => shapes.find(s => s.id === selectedId) ?? null,
     [shapes, selectedId],
   );
 
@@ -80,13 +87,13 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShap
 
   // 학습 모드
   const { count: learnCount, reload: reloadQuiz } = useLearnData(projectId);
-  const learnActive = useLearnStore((s) => s.active);
-  const learnType = useLearnStore((s) => s.type);
-  const learnIndex = useLearnStore((s) => s.index);
-  const learnNameQs = useLearnStore((s) => s.name);
-  const startLearnStore = useLearnStore((s) => s.start);
-  const answerPosition = useLearnStore((s) => s.answerPosition);
-  const stopLearn = useLearnStore((s) => s.stop);
+  const learnActive = useLearnStore(s => s.active);
+  const learnType = useLearnStore(s => s.type);
+  const learnIndex = useLearnStore(s => s.index);
+  const learnNameQs = useLearnStore(s => s.name);
+  const startLearnStore = useLearnStore(s => s.start);
+  const answerPosition = useLearnStore(s => s.answerPosition);
+  const stopLearn = useLearnStore(s => s.stop);
   const [learnChooser, setLearnChooser] = useState(false);
 
   // 학습 중 편집 진입 시 학습 종료(혼선 방지).
@@ -116,7 +123,7 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShap
   // 검색 결과 포커스: 중앙 정렬 + 하이라이트 + 자재면 시트.
   useEffect(() => {
     if (!focusShapeId || !loaded || canvasSize.w === 0) return;
-    const target = shapes.find((s) => s.id === focusShapeId);
+    const target = shapes.find(s => s.id === focusShapeId);
     if (!target) return;
     scale.value = withTiming(1, { duration: 220 });
     panX.value = withTiming(canvasSize.w / 2 - (target.x + target.width / 2), { duration: 260 });
@@ -143,7 +150,7 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShap
       startX.value = panX.value;
       startY.value = panY.value;
     })
-    .onUpdate((e) => {
+    .onUpdate(e => {
       panX.value = startX.value + e.translationX;
       panY.value = startY.value + e.translationY;
     });
@@ -152,7 +159,7 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShap
     .onBegin(() => {
       startScale.value = scale.value;
     })
-    .onUpdate((e) => {
+    .onUpdate(e => {
       const next = startScale.value * e.scale;
       scale.value = Math.min(Math.max(next, MIN_SCALE), MAX_SCALE);
     });
@@ -161,17 +168,10 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShap
     runOnJS(select)(null);
   });
 
-  const canvasGesture = Gesture.Race(
-    tapBackground,
-    Gesture.Simultaneous(pan, pinch),
-  );
+  const canvasGesture = Gesture.Race(tapBackground, Gesture.Simultaneous(pan, pinch));
 
   const contentStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: panX.value },
-      { translateY: panY.value },
-      { scale: scale.value },
-    ],
+    transform: [{ translateX: panX.value }, { translateY: panY.value }, { scale: scale.value }],
   }));
 
   const onTapViewer = (shape: IShape) => {
@@ -199,14 +199,16 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShap
         ref={canvasRef}
         collapsable={false}
         style={styles.canvas}
-        onLayout={(e) => setCanvasSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
+        onLayout={e =>
+          setCanvasSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })
+        }
       >
         <GestureDetector gesture={canvasGesture}>
           <Animated.View style={StyleSheet.absoluteFill} />
         </GestureDetector>
 
-        <Animated.View style={[StyleSheet.absoluteFill, contentStyle]} pointerEvents="box-none">
-          {shapes.map((shape) => (
+        <Animated.View style={[StyleSheet.absoluteFill, contentStyle]} pointerEvents='box-none'>
+          {shapes.map(shape => (
             <ShapeView
               key={shape.id}
               shape={shape}
@@ -224,7 +226,7 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShap
         </Animated.View>
 
         {showEmpty ? (
-          <View style={styles.empty} pointerEvents="none">
+          <View style={styles.empty} pointerEvents='none'>
             <Text style={[typography.body, styles.emptyText]}>
               {editable
                 ? '아래 팔레트에서 도형을 추가하세요'
@@ -240,7 +242,7 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShap
           {selectedShape ? (
             <ShapeInspector
               shape={selectedShape}
-              onUpdate={(patch) => updateShape(selectedShape.id, patch)}
+              onUpdate={patch => updateShape(selectedShape.id, patch)}
               onDelete={onDelete}
               onClose={() => select(null)}
               onManageMaterials={() => setSheetShape(selectedShape)}
@@ -267,7 +269,11 @@ export default function ProjectCanvas({ projectId, onTapMaterialShape, focusShap
               exportPdf({ viewRef: canvasRef, projectId, title: projectName ?? '평면도' })
             }
             disabled={exporting}
-            style={[styles.fab, { bottom: insets.bottom + spacing.xl }, exporting && styles.fabDisabled]}
+            style={[
+              styles.fab,
+              { bottom: insets.bottom + spacing.xl },
+              exporting && styles.fabDisabled,
+            ]}
           >
             <Text style={styles.fabText}>{exporting ? '...' : 'PDF'}</Text>
           </Pressable>

@@ -1,8 +1,9 @@
 // 도형 팔레트 — Edit 모드 하단. 7종 미니 프리뷰 탭하여 추가.
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { SHAPE_CATALOG, type IShapeType } from '@entities/shape/consts';
 import { colors, palette, radius, spacing, typography } from '@shared/theme';
+
+import { SHAPE_CATALOG, type IShapeType } from '@entities/shape/consts';
 
 import ShapeFill from '../ShapeFill';
 
@@ -17,7 +18,7 @@ export default function ShapePalette({ onAdd }: Props) {
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.row}
     >
-      {SHAPE_CATALOG.map((item) => (
+      {SHAPE_CATALOG.map(item => (
         <Pressable
           key={item.type}
           onPress={() => onAdd(item.type)}

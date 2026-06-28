@@ -1,8 +1,8 @@
 // SQLite 스키마 — CLAUDE.md 데이터 모델(Project → Shape → Material).
 // 마이그레이션 배열: index = 적용 후 user_version. 추가 변경은 새 항목을 push.
+import { MATERIAL_TABLE } from '@entities/material/consts';
 import { PROJECT_TABLE } from '@entities/project/consts';
 import { SHAPE_TABLE } from '@entities/shape/consts';
-import { MATERIAL_TABLE } from '@entities/material/consts';
 
 export const MIGRATIONS: string[] = [
   // v1 — 초기 전체 스키마(project / shape / material).

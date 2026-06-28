@@ -39,11 +39,11 @@ export const elevation = {
    * DESIGN-expo.md §1 elevation.magicPlus.
    */
   magicPlus: {
-    shadowColor: colors.blue,       // '#4F97FF'
+    shadowColor: colors.blue, // '#4F97FF'
     shadowOpacity: 0.35,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 8 },
-    elevation: 12,                  // Android 근사치
+    elevation: 12, // Android 근사치
   } satisfies ViewStyle,
 
   /**

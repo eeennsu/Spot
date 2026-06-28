@@ -1,9 +1,10 @@
 // 선택 도형 인스펙터 — Edit 하단 패널. 색/별칭/라벨(기타)/회전/삭제.
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { colors, palette, radius, spacing, typography } from '@shared/theme';
+
 import { SHAPE_ROTATE_STEP } from '@entities/shape/consts';
 import type { IShape } from '@entities/shape/types';
-import { colors, palette, radius, spacing, typography } from '@shared/theme';
 
 interface Props {
   shape: IShape;
@@ -14,21 +15,25 @@ interface Props {
   onManageMaterials?: () => void;
 }
 
-export default function ShapeInspector({ shape, onUpdate, onDelete, onClose, onManageMaterials }: Props) {
+export default function ShapeInspector({
+  shape,
+  onUpdate,
+  onDelete,
+  onClose,
+  onManageMaterials,
+}: Props) {
   const isSpace = shape.category === 'space';
   const labelEditable = shape.type === 'etc';
 
   const rotate = (delta: number) => {
-    const next = ((Math.round(shape.rotation) + delta) % 360 + 360) % 360;
+    const next = (((Math.round(shape.rotation) + delta) % 360) + 360) % 360;
     onUpdate({ rotation: next });
   };
 
   return (
     <View style={styles.panel}>
       <View style={styles.headerRow}>
-        <Text style={typography.heading}>
-          {isSpace ? '공간 도형' : '자재 도형'}
-        </Text>
+        <Text style={typography.heading}>{isSpace ? '공간 도형' : '자재 도형'}</Text>
         <Pressable onPress={onClose} hitSlop={10} style={styles.closeBtn}>
           <Text style={[typography.button, { color: colors.blue }]}>완료</Text>
         </Pressable>
@@ -39,7 +44,7 @@ export default function ShapeInspector({ shape, onUpdate, onDelete, onClose, onM
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>색</Text>
           <View style={styles.swatchRow}>
-            {palette.shapeFills.map((c) => (
+            {palette.shapeFills.map(c => (
               <Pressable
                 key={c}
                 onPress={() => onUpdate({ color: c })}
@@ -60,11 +65,11 @@ export default function ShapeInspector({ shape, onUpdate, onDelete, onClose, onM
         <TextInput
           style={styles.input}
           defaultValue={shape.alias ?? ''}
-          onEndEditing={(e) => onUpdate({ alias: e.nativeEvent.text.trim() || undefined })}
-          placeholder="예: A, B 구역"
+          onEndEditing={e => onUpdate({ alias: e.nativeEvent.text.trim() || undefined })}
+          placeholder='예: A, B 구역'
           placeholderTextColor={colors.textTertiary}
           selectionColor={colors.blue}
-          returnKeyType="done"
+          returnKeyType='done'
         />
       </View>
 
@@ -75,11 +80,11 @@ export default function ShapeInspector({ shape, onUpdate, onDelete, onClose, onM
           <TextInput
             style={styles.input}
             defaultValue={shape.label ?? ''}
-            onEndEditing={(e) => onUpdate({ label: e.nativeEvent.text.trim() || '기타' })}
-            placeholder="기타"
+            onEndEditing={e => onUpdate({ label: e.nativeEvent.text.trim() || '기타' })}
+            placeholder='기타'
             placeholderTextColor={colors.textTertiary}
             selectionColor={colors.blue}
-            returnKeyType="done"
+            returnKeyType='done'
           />
         </View>
       )}
@@ -126,7 +131,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: radius.circle,
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: colors.transparent,
   },
   swatchActive: { borderColor: colors.textPrimary },
   input: {

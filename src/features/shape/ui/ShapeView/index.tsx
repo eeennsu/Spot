@@ -10,13 +10,10 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
-import {
-  SHAPE_MAX_SIZE,
-  SHAPE_MIN_SIZE,
-  isAspectLocked,
-} from '@entities/shape/consts';
-import type { IShape } from '@entities/shape/types';
 import { colors, palette, pickOnFill, radius, spacing, typography } from '@shared/theme';
+
+import { SHAPE_MAX_SIZE, SHAPE_MIN_SIZE, isAspectLocked } from '@entities/shape/consts';
+import type { IShape } from '@entities/shape/types';
 
 import ShapeFill from '../ShapeFill';
 
@@ -73,11 +70,7 @@ export default function ShapeView({
   const containerStyle = useAnimatedStyle(() => ({
     width: w.value,
     height: h.value,
-    transform: [
-      { translateX: tx.value },
-      { translateY: ty.value },
-      { rotate: `${rot.value}deg` },
-    ],
+    transform: [{ translateX: tx.value }, { translateY: ty.value }, { rotate: `${rot.value}deg` }],
   }));
 
   // ── 탭: 선택(Edit) / 뷰어 콜백 ──
@@ -92,7 +85,7 @@ export default function ShapeView({
     .onBegin(() => {
       runOnJS(onSelect)(shape.id);
     })
-    .onUpdate((e) => {
+    .onUpdate(e => {
       tx.value = shape.x + e.translationX / scale.value;
       ty.value = shape.y + e.translationY / scale.value;
     })
@@ -105,10 +98,10 @@ export default function ShapeView({
 
   // ── 리사이즈(우하단 핸들) ──
   const resize = Gesture.Pan()
-    .onUpdate((e) => {
+    .onUpdate(e => {
       const dw = e.translationX / scale.value;
       const dh = e.translationY / scale.value;
-      let nw = clamp(shape.width + dw, SHAPE_MIN_SIZE, SHAPE_MAX_SIZE);
+      const nw = clamp(shape.width + dw, SHAPE_MIN_SIZE, SHAPE_MAX_SIZE);
       let nh = locked ? nw : clamp(shape.height + dh, SHAPE_MIN_SIZE, SHAPE_MAX_SIZE);
       if (locked) nh = nw;
       w.value = nw;
@@ -121,7 +114,7 @@ export default function ShapeView({
 
   // ── 회전(상단 핸들) — 수평 드래그로 각도 증감 ──
   const rotate = Gesture.Pan()
-    .onUpdate((e) => {
+    .onUpdate(e => {
       rot.value = shape.rotation + e.translationX * 0.5;
     })
     .onEnd(() => {
@@ -141,7 +134,7 @@ export default function ShapeView({
 
       {/* Viewer 자재명 캡션 */}
       {!editable && caption ? (
-        <View style={styles.caption} pointerEvents="none">
+        <View style={styles.caption} pointerEvents='none'>
           <Text style={[typography.metadata, { color: pickOnFill(shape.color) }]} numberOfLines={2}>
             {caption}
           </Text>
@@ -150,13 +143,13 @@ export default function ShapeView({
 
       {/* 별칭 배지 */}
       {shape.alias ? (
-        <View style={styles.aliasBadge} pointerEvents="none">
+        <View style={styles.aliasBadge} pointerEvents='none'>
           <Text style={styles.aliasText}>{shape.alias}</Text>
         </View>
       ) : null}
 
       {/* 선택/하이라이트 외곽선 */}
-      {selected || highlighted ? <View style={styles.outline} pointerEvents="none" /> : null}
+      {selected || highlighted ? <View style={styles.outline} pointerEvents='none' /> : null}
 
       {/* 핸들 */}
       {showHandles ? (

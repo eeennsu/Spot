@@ -1,5 +1,6 @@
 // 자재 저장(생성/갱신) — SQLite 직접 접근(repository 만 허용). INSERT OR REPLACE.
 import { getDb } from '@shared/db';
+
 import { MATERIAL_TABLE } from '@entities/material/consts';
 import type { IMaterial } from '@entities/material/types';
 

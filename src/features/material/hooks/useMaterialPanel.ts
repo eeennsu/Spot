@@ -2,13 +2,14 @@
 // feature 훅이므로 repository 직접 호출 허용(컴포넌트는 이 훅만 사용).
 import { useCallback, useEffect, useState } from 'react';
 
-import type { IMaterial } from '@entities/material/types';
 import { utilCreateId } from '@shared/utils/util_id';
 import { utilDeleteAppImage } from '@shared/utils/util_image';
 
+import type { IMaterial } from '@entities/material/types';
+
+import repoMaterialDelete from '../repositories/delete_material';
 import repoMaterialList from '../repositories/list_materials';
 import repoMaterialSave from '../repositories/save_material';
-import repoMaterialDelete from '../repositories/delete_material';
 
 export function useMaterialPanel(shapeId: string) {
   const [materials, setMaterials] = useState<IMaterial[]>([]);
@@ -33,14 +34,14 @@ export function useMaterialPanel(shapeId: string) {
       name: '새 자재',
     };
     await repoMaterialSave(material);
-    setMaterials((prev) => [...prev, material]);
+    setMaterials(prev => [...prev, material]);
     return material;
   }, [materials, shapeId]);
 
   const updateMaterial = useCallback(async (id: string, patch: Partial<IMaterial>) => {
     let next: IMaterial | undefined;
-    setMaterials((prev) =>
-      prev.map((m) => {
+    setMaterials(prev =>
+      prev.map(m => {
         if (m.id !== id) return m;
         next = { ...m, ...patch };
         return next;
@@ -49,18 +50,21 @@ export function useMaterialPanel(shapeId: string) {
     if (next) await repoMaterialSave(next);
   }, []);
 
-  const removeMaterial = useCallback(async (id: string) => {
-    const target = materials.find((m) => m.id === id);
-    setMaterials((prev) => prev.filter((m) => m.id !== id));
-    await repoMaterialDelete(id);
-    await utilDeleteAppImage(target?.imageUri);
-  }, [materials]);
+  const removeMaterial = useCallback(
+    async (id: string) => {
+      const target = materials.find(m => m.id === id);
+      setMaterials(prev => prev.filter(m => m.id !== id));
+      await repoMaterialDelete(id);
+      await utilDeleteAppImage(target?.imageUri);
+    },
+    [materials],
+  );
 
   /** 층 순서 이동(up=위로). layerOrder 를 0..n 으로 재정렬해 저장. */
   const move = useCallback(
     async (id: string, dir: 'up' | 'down') => {
       const sorted = [...materials].sort((a, b) => a.layerOrder - b.layerOrder);
-      const i = sorted.findIndex((m) => m.id === id);
+      const i = sorted.findIndex(m => m.id === id);
       const j = dir === 'up' ? i - 1 : i + 1;
       if (i < 0 || j < 0 || j >= sorted.length) return;
       [sorted[i], sorted[j]] = [sorted[j], sorted[i]];

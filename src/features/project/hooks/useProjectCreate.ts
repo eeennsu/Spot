@@ -2,5 +2,5 @@
 import { useProjectStore } from '../stores/project';
 
 export function useProjectCreate() {
-  return useProjectStore((s) => s.addProject);
+  return useProjectStore(s => s.addProject);
 }

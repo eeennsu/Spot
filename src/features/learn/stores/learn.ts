@@ -40,9 +40,19 @@ export const useLearnStore = create<LearnState>((set, get) => ({
   finished: false,
 
   start: (type, position, name) =>
-    set({ active: true, type, position, name, index: 0, score: 0, answered: null, picked: null, finished: false }),
+    set({
+      active: true,
+      type,
+      position,
+      name,
+      index: 0,
+      score: 0,
+      answered: null,
+      picked: null,
+      finished: false,
+    }),
 
-  answerPosition: (shapeId) => {
+  answerPosition: shapeId => {
     const s = get();
     if (!s.active || s.type !== 'position' || s.answered) return;
     const q = s.position[s.index];
@@ -51,7 +61,7 @@ export const useLearnStore = create<LearnState>((set, get) => ({
     set({ answered: ok ? 'correct' : 'wrong', score: s.score + (ok ? 1 : 0) });
   },
 
-  answerName: (choice) => {
+  answerName: choice => {
     const s = get();
     if (!s.active || s.type !== 'name' || s.answered) return;
     const q = s.name[s.index];
@@ -69,5 +79,6 @@ export const useLearnStore = create<LearnState>((set, get) => ({
     }
   },
 
-  stop: () => set({ active: false, answered: null, picked: null, finished: false, index: 0, score: 0 }),
+  stop: () =>
+    set({ active: false, answered: null, picked: null, finished: false, index: 0, score: 0 }),
 }));

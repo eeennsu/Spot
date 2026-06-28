@@ -1,22 +1,24 @@
 // 프로젝트 상세 = 도형 편집기 셸. Entry/Body 분리(헤더 즉시 + 캔버스 지연 마운트).
 // 데이터 접근은 features/*/hooks 경유. 모드 토글은 editor store.
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Stack, useLocalSearchParams } from 'expo-router';
 
-import { useProjectGet } from '@features/project/hooks/useProjectGet';
-import { useEditorStore } from '@features/shape/stores/editor';
-import { useLearnStore } from '@features/learn/stores/learn';
-import SearchOverlay from '@features/search/ui/SearchOverlay';
-import ProjectCanvas from '@widgets/ProjectCanvas';
 import { colors, spacing, typography } from '@shared/theme';
+
+import { useLearnStore } from '@features/learn/stores/learn';
+import { useProjectGet } from '@features/project/hooks/useProjectGet';
+import SearchOverlay from '@features/search/ui/SearchOverlay';
+import { useEditorStore } from '@features/shape/stores/editor';
+
+import ProjectCanvas from '@widgets/ProjectCanvas';
 
 export default function ProjectDetailScreen() {
   const { id, focus } = useLocalSearchParams<{ id: string; focus?: string }>();
   const { project } = useProjectGet(id);
 
-  const reset = useEditorStore((s) => s.reset);
-  const stopLearn = useLearnStore((s) => s.stop);
+  const reset = useEditorStore(s => s.reset);
+  const stopLearn = useLearnStore(s => s.stop);
 
   // 검색 결과/전역 이동 포커스 도형
   const [focusId, setFocusId] = useState<string | undefined>(focus);
@@ -44,7 +46,11 @@ export default function ProjectDetailScreen() {
           title: project?.name ?? '평면도',
           headerRight: () => (
             <View style={styles.headerRow}>
-              <Pressable onPress={() => setSearchVisible(true)} hitSlop={10} style={styles.headerBtn}>
+              <Pressable
+                onPress={() => setSearchVisible(true)}
+                hitSlop={10}
+                style={styles.headerBtn}
+              >
                 <Text style={styles.searchIcon}>🔍</Text>
               </Pressable>
               <EditToggle />
@@ -62,7 +68,7 @@ export default function ProjectDetailScreen() {
         visible={searchVisible}
         projectId={id}
         onClose={() => setSearchVisible(false)}
-        onSelect={(r) => setFocusId(r.shapeId)}
+        onSelect={r => setFocusId(r.shapeId)}
       />
     </View>
   );
@@ -70,14 +76,12 @@ export default function ProjectDetailScreen() {
 
 /** 우상단 Viewer↔Edit 토글. editor store 직접 사용(전역 UI 상태). */
 function EditToggle() {
-  const mode = useEditorStore((s) => s.mode);
-  const toggle = useEditorStore((s) => s.toggleMode);
+  const mode = useEditorStore(s => s.mode);
+  const toggle = useEditorStore(s => s.toggleMode);
   const editing = mode === 'edit';
   return (
     <Pressable onPress={toggle} hitSlop={10} style={styles.headerBtn}>
-      <Text style={[typography.button, { color: colors.blue }]}>
-        {editing ? '완료' : '편집'}
-      </Text>
+      <Text style={[typography.button, { color: colors.blue }]}>{editing ? '완료' : '편집'}</Text>
     </Pressable>
   );
 }

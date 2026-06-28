@@ -3,9 +3,10 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Polygon } from 'react-native-svg';
 
-import type { IShapeType } from '@entities/shape/consts';
 import { pickOnFill } from '@shared/theme';
 import { radius, typography } from '@shared/theme';
+
+import type { IShapeType } from '@entities/shape/consts';
 
 interface Props {
   type: IShapeType;
@@ -21,7 +22,7 @@ export default function ShapeFill({ type, color, label }: Props) {
   if (type === 'L') {
     return (
       <View style={StyleSheet.absoluteFill}>
-        <Svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <Svg width='100%' height='100%' viewBox='0 0 100 100' preserveAspectRatio='none'>
           <Polygon points={L_POINTS} fill={color} />
         </Svg>
         {label ? <Centered label={label} color={color} /> : null}
@@ -37,14 +38,18 @@ export default function ShapeFill({ type, color, label }: Props) {
         { backgroundColor: color, borderRadius: isCircle ? radius.circle : radius.soft },
       ]}
     >
-      {label ? <Text style={[typography.metadata, { color: pickOnFill(color) }]} numberOfLines={2}>{label}</Text> : null}
+      {label ? (
+        <Text style={[typography.metadata, { color: pickOnFill(color) }]} numberOfLines={2}>
+          {label}
+        </Text>
+      ) : null}
     </View>
   );
 }
 
 function Centered({ label, color }: { label: string; color: string }) {
   return (
-    <View style={[StyleSheet.absoluteFill, styles.center]} pointerEvents="none">
+    <View style={[StyleSheet.absoluteFill, styles.center]} pointerEvents='none'>
       <Text style={[typography.metadata, { color: pickOnFill(color) }]} numberOfLines={2}>
         {label}
       </Text>

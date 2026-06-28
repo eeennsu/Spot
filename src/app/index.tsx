@@ -1,15 +1,16 @@
 // 프로젝트 목록 + 전역 검색. 행 탭 → 상세. 검색 결과 탭 → 해당 프로젝트 도형으로 이동.
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useProjectList } from '@features/project/hooks/useProjectList';
-import { useProjectCreate } from '@features/project/hooks/useProjectCreate';
-import { useSearch } from '@features/search/hooks/useSearch';
-import SearchResultList from '@features/search/ui/SearchResultList';
 import SearchBar from '@shared/components/customs/SearchBar';
 import { colors, radius, spacing, typography } from '@shared/theme';
+
+import { useProjectCreate } from '@features/project/hooks/useProjectCreate';
+import { useProjectList } from '@features/project/hooks/useProjectList';
+import { useSearch } from '@features/search/hooks/useSearch';
+import SearchResultList from '@features/search/ui/SearchResultList';
 
 export default function ProjectsScreen() {
   const router = useRouter();
@@ -35,7 +36,11 @@ export default function ProjectsScreen() {
   return (
     <View style={styles.root}>
       <View style={styles.searchWrap}>
-        <SearchBar value={query} onChangeText={setQuery} placeholder="모든 평면도에서 자재·별칭 검색" />
+        <SearchBar
+          value={query}
+          onChangeText={setQuery}
+          placeholder='모든 평면도에서 자재·별칭 검색'
+        />
       </View>
 
       {searching ? (
@@ -43,13 +48,13 @@ export default function ProjectsScreen() {
           results={results}
           hasQuery
           showProject
-          onSelect={(r) => router.push(`/project/${r.projectId}?focus=${r.shapeId}`)}
+          onSelect={r => router.push(`/project/${r.projectId}?focus=${r.shapeId}`)}
         />
       ) : (
         <>
           <FlatList
             data={projects}
-            keyExtractor={(p) => p.id}
+            keyExtractor={p => p.id}
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={
               <Text style={[typography.metadata, styles.empty]}>
@@ -72,10 +77,10 @@ export default function ProjectsScreen() {
               style={styles.input}
               value={name}
               onChangeText={setName}
-              placeholder="새 평면도 이름"
+              placeholder='새 평면도 이름'
               placeholderTextColor={colors.textTertiary}
               selectionColor={colors.blue}
-              returnKeyType="done"
+              returnKeyType='done'
               onSubmitEditing={onAdd}
             />
             <Pressable

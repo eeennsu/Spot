@@ -2,8 +2,8 @@
 import { useProjectStore } from '../stores/project';
 
 export function useProjectList() {
-  const projects = useProjectStore((s) => s.projects);
-  const loading = useProjectStore((s) => s.loading);
-  const load = useProjectStore((s) => s.load);
+  const projects = useProjectStore(s => s.projects);
+  const loading = useProjectStore(s => s.loading);
+  const load = useProjectStore(s => s.load);
   return { projects, loading, load };
 }

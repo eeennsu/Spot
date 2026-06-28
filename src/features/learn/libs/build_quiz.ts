@@ -24,7 +24,7 @@ export interface IQuizSet {
 }
 
 export default function buildQuiz(rows: IQuizRow[]): IQuizSet {
-  const allNames = Array.from(new Set(rows.map((r) => r.name)));
+  const allNames = Array.from(new Set(rows.map(r => r.name)));
 
   // name → 그 이름을 가진 도형들
   const nameToShapes = new Map<string, Set<string>>();
@@ -32,12 +32,14 @@ export default function buildQuiz(rows: IQuizRow[]): IQuizSet {
   const shapeToNames = new Map<string, Set<string>>();
   for (const r of rows) {
     (nameToShapes.get(r.name) ?? nameToShapes.set(r.name, new Set()).get(r.name)!).add(r.shapeId);
-    (shapeToNames.get(r.shapeId) ?? shapeToNames.set(r.shapeId, new Set()).get(r.shapeId)!).add(r.name);
+    (shapeToNames.get(r.shapeId) ?? shapeToNames.set(r.shapeId, new Set()).get(r.shapeId)!).add(
+      r.name,
+    );
   }
 
   // 위치 맞히기 — 이름 단위
   const position: IPositionQuestion[] = shuffle(
-    allNames.map((name) => ({
+    allNames.map(name => ({
       name,
       correctShapeIds: Array.from(nameToShapes.get(name) ?? []),
     })),
@@ -48,7 +50,7 @@ export default function buildQuiz(rows: IQuizRow[]): IQuizSet {
     Array.from(shapeToNames.entries()).map(([shapeId, names]) => {
       const correctNames = Array.from(names);
       const correct = correctNames[Math.floor(Math.random() * correctNames.length)];
-      const distractors = shuffle(allNames.filter((n) => !names.has(n))).slice(0, MAX_CHOICES - 1);
+      const distractors = shuffle(allNames.filter(n => !names.has(n))).slice(0, MAX_CHOICES - 1);
       const choices = shuffle([correct, ...distractors]);
       return { shapeId, correctNames, choices };
     }),

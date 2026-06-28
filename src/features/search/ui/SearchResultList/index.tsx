@@ -25,8 +25,8 @@ export default function SearchResultList({ results, hasQuery, showProject, onSel
   return (
     <FlatList
       data={results}
-      keyExtractor={(r) => r.key}
-      keyboardShouldPersistTaps="handled"
+      keyExtractor={r => r.key}
+      keyboardShouldPersistTaps='handled'
       contentContainerStyle={styles.list}
       renderItem={({ item }) => (
         <Pressable
@@ -35,7 +35,9 @@ export default function SearchResultList({ results, hasQuery, showProject, onSel
         >
           <View style={[styles.dot, item.kind === 'alias' && styles.dotAlias]} />
           <View style={styles.texts}>
-            <Text style={typography.taskTitle} numberOfLines={1}>{item.matched}</Text>
+            <Text style={typography.taskTitle} numberOfLines={1}>
+              {item.matched}
+            </Text>
             <Text style={typography.metadata} numberOfLines={1}>
               {showProject && item.projectName ? `${item.projectName} · ` : ''}
               {item.shapeLabel ? `${item.shapeLabel} 도형` : '도형'}

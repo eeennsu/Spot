@@ -23,11 +23,16 @@ export default function SearchOverlay({ visible, projectId, onClose, onSelect }:
   const { results } = useSearch(query, projectId);
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <Modal visible={visible} animationType='slide' onRequestClose={onClose} statusBarTranslucent>
       <View style={[styles.root, { paddingTop: insets.top }]}>
         <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <SearchBar value={query} onChangeText={setQuery} autoFocus placeholder="이 평면도에서 검색" />
+          <View style={styles.searchField}>
+            <SearchBar
+              value={query}
+              onChangeText={setQuery}
+              autoFocus
+              placeholder='이 평면도에서 검색'
+            />
           </View>
           <Pressable onPress={onClose} hitSlop={10} style={styles.cancel}>
             <Text style={[typography.button, { color: colors.blue }]}>닫기</Text>
@@ -37,7 +42,7 @@ export default function SearchOverlay({ visible, projectId, onClose, onSelect }:
         <SearchResultList
           results={results}
           hasQuery={query.trim().length > 0}
-          onSelect={(r) => {
+          onSelect={r => {
             onSelect(r);
             onClose();
           }}
@@ -49,6 +54,7 @@ export default function SearchOverlay({ visible, projectId, onClose, onSelect }:
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.canvas },
+  searchField: { flex: 1 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

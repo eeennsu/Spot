@@ -1,15 +1,16 @@
 // 루트 레이아웃 — 제스처 루트 / SafeArea / 폰트 게이트 / DB 초기화 / Stack 네비.
-import { useEffect } from 'react';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import {
   useFonts,
   Inter_400Regular,
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
+import { StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { migrate } from '@shared/db';
 import { colors } from '@shared/theme';
@@ -30,9 +31,9 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.canvas }}>
+    <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
-        <StatusBar style="dark" />
+        <StatusBar style='dark' />
         <Stack
           screenOptions={{
             headerStyle: { backgroundColor: colors.canvas },
@@ -41,10 +42,14 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: colors.canvas },
           }}
         >
-          <Stack.Screen name="index" options={{ title: '평면도' }} />
-          <Stack.Screen name="project/[id]" options={{ title: '도형 편집기' }} />
+          <Stack.Screen name='index' options={{ title: '평면도' }} />
+          <Stack.Screen name='project/[id]' options={{ title: '도형 편집기' }} />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.canvas },
+});

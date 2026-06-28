@@ -15,9 +15,9 @@ import { colors } from './colors';
  *   700(Bold)    → 'Inter-Bold'      (원본: SF Pro Display w700)
  */
 export const fontFamily = {
-  regular: 'Inter-Regular',   // 400 본문·태스크 제목·사이드바
+  regular: 'Inter-Regular', // 400 본문·태스크 제목·사이드바
   semibold: 'Inter-SemiBold', // 600 버튼·활성 사이드바·날짜 pill
-  bold: 'Inter-Bold',         // 700 리스트 제목·프로젝트 제목·섹션 헤딩
+  bold: 'Inter-Bold', // 700 리스트 제목·프로젝트 제목·섹션 헤딩
 } as const;
 
 /**
@@ -36,7 +36,7 @@ export const typography = {
     fontFamily: fontFamily.bold,
     fontWeight: '700' as const,
     fontSize: 28,
-    lineHeight: 34,   // 28 × 1.2 ≈ 34
+    lineHeight: 34, // 28 × 1.2 ≈ 34
     letterSpacing: 0.3,
     color: colors.textPrimary,
   } satisfies TextStyle,
@@ -49,7 +49,7 @@ export const typography = {
     fontFamily: fontFamily.bold,
     fontWeight: '700' as const,
     fontSize: 24,
-    lineHeight: 29,   // 24 × 1.2 ≈ 29
+    lineHeight: 29, // 24 × 1.2 ≈ 29
     letterSpacing: 0.3,
     color: colors.textPrimary,
   } satisfies TextStyle,
@@ -63,7 +63,7 @@ export const typography = {
     fontFamily: fontFamily.bold,
     fontWeight: '700' as const,
     fontSize: 17,
-    lineHeight: 22,   // 17 × 1.3 ≈ 22
+    lineHeight: 22, // 17 × 1.3 ≈ 22
     letterSpacing: -0.2,
     color: colors.textPrimary,
   } satisfies TextStyle,
@@ -76,7 +76,7 @@ export const typography = {
     fontFamily: fontFamily.regular,
     fontWeight: '400' as const,
     fontSize: 17,
-    lineHeight: 23,   // 17 × 1.35 ≈ 23
+    lineHeight: 23, // 17 × 1.35 ≈ 23
     letterSpacing: -0.2,
     color: colors.textPrimary,
   } satisfies TextStyle,
@@ -90,7 +90,7 @@ export const typography = {
     fontFamily: fontFamily.regular,
     fontWeight: '400' as const,
     fontSize: 15,
-    lineHeight: 22,   // 15 × 1.45 ≈ 22
+    lineHeight: 22, // 15 × 1.45 ≈ 22
     letterSpacing: -0.1,
     color: colors.textPrimary,
   } satisfies TextStyle,
@@ -103,7 +103,7 @@ export const typography = {
     fontFamily: fontFamily.regular,
     fontWeight: '400' as const,
     fontSize: 14,
-    lineHeight: 19,   // 14 × 1.35 ≈ 19
+    lineHeight: 19, // 14 × 1.35 ≈ 19
     letterSpacing: -0.1,
     color: colors.textSecondary,
   } satisfies TextStyle,
@@ -116,7 +116,7 @@ export const typography = {
     fontFamily: fontFamily.regular,
     fontWeight: '400' as const,
     fontSize: 13,
-    lineHeight: 17,   // 13 × 1.3 ≈ 17
+    lineHeight: 17, // 13 × 1.3 ≈ 17
     letterSpacing: 0,
     color: colors.textSecondary,
   } satisfies TextStyle,
@@ -143,7 +143,7 @@ export const typography = {
     fontFamily: fontFamily.regular,
     fontWeight: '400' as const,
     fontSize: 16,
-    lineHeight: 21,   // 16 × 1.3 ≈ 21
+    lineHeight: 21, // 16 × 1.3 ≈ 21
     letterSpacing: -0.1,
     color: colors.textPrimary,
   } satisfies TextStyle,
@@ -183,12 +183,11 @@ export const typography = {
     fontFamily: fontFamily.bold,
     fontWeight: '700' as const,
     fontSize: 12,
-    lineHeight: 14,   // 12 × 1.2 ≈ 14
+    lineHeight: 14, // 12 × 1.2 ≈ 14
     letterSpacing: 0.5,
     textTransform: 'uppercase' as const,
     color: colors.textSecondary,
   } satisfies TextStyle,
-
 } satisfies Record<string, TextStyle>;
 
 export type TypographyToken = keyof typeof typography;

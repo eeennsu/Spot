@@ -1,13 +1,14 @@
 // PDF 출력 훅 — 캔버스 캡처 + 도형/자재 조회 → HTML → expo-print → 공유.
 // pdf 는 shape·material 두 feature 데이터를 합성한다(다른 feature repository 직접 사용).
-import { useState } from 'react';
-import { captureRef } from 'react-native-view-shot';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import { useState } from 'react';
+import { captureRef } from 'react-native-view-shot';
 
-import repoShapeList from '@features/shape/repositories/list_shapes';
-import repoMaterialFullByProject from '@features/material/repositories/list_full_by_project';
 import type { IMaterial } from '@entities/material/types';
+
+import repoMaterialFullByProject from '@features/material/repositories/list_full_by_project';
+import repoShapeList from '@features/shape/repositories/list_shapes';
 
 import buildPdfHtml, { type IPdfSection } from '../libs/build_html';
 
@@ -42,8 +43,8 @@ export function useExportPdf() {
         byShape.set(m.shapeId, arr);
       }
       const sections: IPdfSection[] = shapes
-        .filter((s) => s.category === 'material')
-        .map((s) => ({
+        .filter(s => s.category === 'material')
+        .map(s => ({
           title: s.alias || s.label || '자재 랙',
           materials: (byShape.get(s.id) ?? []).sort((a, b) => a.layerOrder - b.layerOrder),
         }));

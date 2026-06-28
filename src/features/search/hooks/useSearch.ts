@@ -18,9 +18,7 @@ export function useSearch(query: string, projectId?: string) {
     }
     let alive = true;
     const t = setTimeout(async () => {
-      const r = projectId
-        ? await repoSearchProject(projectId, q)
-        : await repoSearchGlobal(q);
+      const r = projectId ? await repoSearchProject(projectId, q) : await repoSearchGlobal(q);
       if (alive) setResults(r);
     }, DEBOUNCE_MS);
     return () => {

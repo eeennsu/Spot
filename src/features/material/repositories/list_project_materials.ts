@@ -1,6 +1,7 @@
 // 프로젝트 전체 자재 요약 — shape JOIN. Viewer 캔버스 라벨/검색에 사용.
 // SQLite 직접 접근(repository 만 허용).
 import { getDb } from '@shared/db';
+
 import { MATERIAL_TABLE } from '@entities/material/consts';
 import { SHAPE_TABLE } from '@entities/shape/consts';
 
@@ -22,5 +23,5 @@ export default async function repoMaterialListByProject(
        ORDER BY m.layer_order ASC`,
       projectId,
     )
-    .map((r) => ({ shapeId: r.shape_id, name: r.name, layerOrder: r.layer_order }));
+    .map(r => ({ shapeId: r.shape_id, name: r.name, layerOrder: r.layer_order }));
 }

@@ -1,5 +1,6 @@
 // 전역 검색 — 모든 프로젝트의 자재 이름 + 도형 별칭(부분 일치). repository 만 SQLite 접근.
 import { getDb } from '@shared/db';
+
 import { MATERIAL_TABLE } from '@entities/material/consts';
 import { PROJECT_TABLE } from '@entities/project/consts';
 import { SHAPE_TABLE } from '@entities/shape/consts';
@@ -46,7 +47,7 @@ export default async function repoSearchGlobal(query: string): Promise<ISearchRe
   );
 
   return [
-    ...materials.map<ISearchResult>((r) => ({
+    ...materials.map<ISearchResult>(r => ({
       key: `m:${r.id}`,
       projectId: r.project_id,
       projectName: r.project_name,
@@ -55,7 +56,7 @@ export default async function repoSearchGlobal(query: string): Promise<ISearchRe
       matched: r.name,
       kind: 'material',
     })),
-    ...aliases.map<ISearchResult>((r) => ({
+    ...aliases.map<ISearchResult>(r => ({
       key: `a:${r.id}`,
       projectId: r.project_id,
       projectName: r.project_name,

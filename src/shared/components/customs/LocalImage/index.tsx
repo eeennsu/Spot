@@ -1,6 +1,14 @@
 // 앱 로컬 이미지 표시 래퍼 — 파일 유실 시 플레이스홀더. 이 앱은 사진이 전부 로컬.
 import { useEffect, useState } from 'react';
-import { Image, StyleSheet, Text, View, type ImageStyle, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Image,
+  StyleSheet,
+  Text,
+  View,
+  type ImageStyle,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 
 import { colors, radius, typography } from '@shared/theme';
 import { utilImageExists } from '@shared/utils/util_image';
@@ -22,7 +30,7 @@ export default function LocalImage({ uri, style, emptyLabel = '사진 없음' }:
       return;
     }
     setStatus('checking');
-    utilImageExists(uri).then((exists) => {
+    utilImageExists(uri).then(exists => {
       if (alive) setStatus(exists ? 'ok' : 'missing');
     });
     return () => {
@@ -35,7 +43,7 @@ export default function LocalImage({ uri, style, emptyLabel = '사진 없음' }:
       <Image
         source={{ uri }}
         style={[styles.base, style] as StyleProp<ImageStyle>}
-        resizeMode="cover"
+        resizeMode='cover'
       />
     );
   }

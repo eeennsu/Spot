@@ -4,10 +4,10 @@ import { create } from 'zustand';
 
 import type { IProject } from '@entities/project/types';
 
-import repoProjectList from '../repositories/list_projects';
 import repoProjectCreate from '../repositories/create_project';
-import repoProjectRename from '../repositories/rename_project';
 import repoProjectDelete from '../repositories/delete_project';
+import repoProjectList from '../repositories/list_projects';
+import repoProjectRename from '../repositories/rename_project';
 
 interface ProjectState {
   projects: IProject[];

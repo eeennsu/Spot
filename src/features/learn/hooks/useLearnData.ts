@@ -13,7 +13,7 @@ export function useLearnData(projectId: string) {
 
   const reload = useCallback(async (): Promise<IQuizSet> => {
     const rows = await repoMaterialListByProject(projectId);
-    const set = buildQuiz(rows.map((r) => ({ shapeId: r.shapeId, name: r.name })));
+    const set = buildQuiz(rows.map(r => ({ shapeId: r.shapeId, name: r.name })));
     setQuiz(set);
     setReady(true);
     return set;

@@ -1,7 +1,7 @@
 // 학습 하단 바 — 진행/점수/문제/피드백. 위치=캔버스 탭으로 응답, 이름=보기 선택.
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, radius, spacing, typography } from '@shared/theme';
 
@@ -15,8 +15,18 @@ interface Props {
 export default function LearnBar({ onRestart }: Props) {
   const insets = useSafeAreaInsets();
   const {
-    active, type, position, name, index, score, answered, picked, finished,
-    answerName, next, stop,
+    active,
+    type,
+    position,
+    name,
+    index,
+    score,
+    answered,
+    picked,
+    finished,
+    answerName,
+    next,
+    stop,
   } = useLearnStore();
 
   if (!active) return null;
@@ -26,9 +36,7 @@ export default function LearnBar({ onRestart }: Props) {
   return (
     <View style={[styles.bar, { paddingBottom: insets.bottom + spacing.md }]}>
       <View style={styles.topRow}>
-        <Text style={typography.metadata}>
-          {finished ? '완료' : `${index + 1} / ${total}`}
-        </Text>
+        <Text style={typography.metadata}>{finished ? '완료' : `${index + 1} / ${total}`}</Text>
         <Text style={[typography.metadata, { color: colors.blue }]}>점수 {score}</Text>
         <Pressable onPress={stop} hitSlop={10} style={styles.closeBtn}>
           <Text style={[typography.button, { color: colors.textSecondary }]}>닫기</Text>
@@ -37,7 +45,9 @@ export default function LearnBar({ onRestart }: Props) {
 
       {finished ? (
         <View style={styles.finishWrap}>
-          <Text style={typography.heading}>점수 {score} / {total}</Text>
+          <Text style={typography.heading}>
+            점수 {score} / {total}
+          </Text>
           <View style={styles.finishActions}>
             <Pressable onPress={onRestart} style={[styles.actBtn, styles.actPrimary]}>
               <Text style={[typography.button, { color: colors.canvas }]}>다시</Text>
@@ -48,11 +58,7 @@ export default function LearnBar({ onRestart }: Props) {
           </View>
         </View>
       ) : type === 'position' ? (
-        <PositionBody
-          prompt={position[index]?.name ?? ''}
-          answered={answered}
-          onNext={next}
-        />
+        <PositionBody prompt={position[index]?.name ?? ''} answered={answered} onNext={next} />
       ) : (
         <NameBody
           choices={name[index]?.choices ?? []}
@@ -67,7 +73,15 @@ export default function LearnBar({ onRestart }: Props) {
   );
 }
 
-function PositionBody({ prompt, answered, onNext }: { prompt: string; answered: 'correct' | 'wrong' | null; onNext: () => void }) {
+function PositionBody({
+  prompt,
+  answered,
+  onNext,
+}: {
+  prompt: string;
+  answered: 'correct' | 'wrong' | null;
+  onNext: () => void;
+}) {
   return (
     <View style={styles.body}>
       <Text style={typography.taskTitle}>
@@ -75,7 +89,12 @@ function PositionBody({ prompt, answered, onNext }: { prompt: string; answered: 
       </Text>
       {answered ? (
         <Animated.View entering={FadeIn.duration(150)} style={styles.feedbackRow}>
-          <Text style={[typography.button, { color: answered === 'correct' ? colors.success : colors.deadline }]}>
+          <Text
+            style={[
+              typography.button,
+              { color: answered === 'correct' ? colors.success : colors.deadline },
+            ]}
+          >
             {answered === 'correct' ? '✓ 정답' : '✗ 오답'}
           </Text>
           <Pressable onPress={onNext} style={[styles.actBtn, styles.actPrimary]}>
@@ -103,7 +122,7 @@ function NameBody({ choices, correctNames, answered, picked, onPick, onNext }: N
     <View style={styles.body}>
       <Text style={typography.taskTitle}>하이라이트된 도형의 자재 이름은?</Text>
       <View style={styles.choices}>
-        {choices.map((c) => {
+        {choices.map(c => {
           const isCorrect = correctNames.includes(c);
           const showState = answered != null;
           const tint = showState
@@ -120,7 +139,9 @@ function NameBody({ choices, correctNames, answered, picked, onPick, onNext }: N
               onPress={() => onPick(c)}
               style={[styles.choice, tint && { borderColor: tint, backgroundColor: `${tint}1A` }]}
             >
-              <Text style={[typography.body, tint && { color: tint }]} numberOfLines={1}>{c}</Text>
+              <Text style={[typography.body, tint && { color: tint }]} numberOfLines={1}>
+                {c}
+              </Text>
             </Pressable>
           );
         })}

@@ -26,7 +26,7 @@ function esc(s: string): string {
 
 export default function buildPdfHtml({ title, image, sections, dateText }: BuildArgs): string {
   const sectionsHtml = sections
-    .map((sec) => {
+    .map(sec => {
       const items = sec.materials.length
         ? sec.materials
             .map(

@@ -14,15 +14,16 @@ interface EditorState {
   reset: () => void;
 }
 
-export const useEditorStore = create<EditorState>((set) => ({
+export const useEditorStore = create<EditorState>(set => ({
   mode: 'viewer',
   selectedShapeId: null,
-  setMode: (mode) => set((s) => ({ mode, selectedShapeId: mode === 'viewer' ? null : s.selectedShapeId })),
+  setMode: mode =>
+    set(s => ({ mode, selectedShapeId: mode === 'viewer' ? null : s.selectedShapeId })),
   toggleMode: () =>
-    set((s) => {
+    set(s => {
       const next = s.mode === 'viewer' ? 'edit' : 'viewer';
       return { mode: next, selectedShapeId: next === 'viewer' ? null : s.selectedShapeId };
     }),
-  select: (id) => set({ selectedShapeId: id }),
+  select: id => set({ selectedShapeId: id }),
   reset: () => set({ mode: 'viewer', selectedShapeId: null }),
 }));

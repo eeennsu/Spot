@@ -2,5 +2,5 @@
 import { useProjectStore } from '../stores/project';
 
 export function useProjectRename() {
-  return useProjectStore((s) => s.renameProject);
+  return useProjectStore(s => s.renameProject);
 }

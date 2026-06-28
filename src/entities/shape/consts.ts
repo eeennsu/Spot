@@ -1,9 +1,5 @@
 // Shape 도메인 상수 — 테이블명·크기·도형 카탈로그. 하드코딩 금지(여기 참조).
-import type {
-  IShapeCategory,
-  IShapeMaterialType,
-  IShapeSpaceType,
-} from './types';
+import type { IShapeCategory, IShapeMaterialType, IShapeSpaceType } from './types';
 
 export const SHAPE_TABLE = 'shape' as const;
 
@@ -38,19 +34,71 @@ export interface IShapeCatalogItem {
  */
 export const SHAPE_CATALOG: readonly IShapeCatalogItem[] = [
   // ── 자재 도형 (자재를 layer 로 담음) ──
-  { category: 'material', type: 'rect', labelKo: '직사각형', defaultWidth: 140, defaultHeight: 90, lockAspect: false },
-  { category: 'material', type: 'square', labelKo: '정사각형', defaultWidth: 110, defaultHeight: 110, lockAspect: true },
-  { category: 'material', type: 'L', labelKo: 'ㄴ자', defaultWidth: 130, defaultHeight: 130, lockAspect: false },
-  { category: 'material', type: 'circle', labelKo: '원', defaultWidth: 110, defaultHeight: 110, lockAspect: true },
+  {
+    category: 'material',
+    type: 'rect',
+    labelKo: '직사각형',
+    defaultWidth: 140,
+    defaultHeight: 90,
+    lockAspect: false,
+  },
+  {
+    category: 'material',
+    type: 'square',
+    labelKo: '정사각형',
+    defaultWidth: 110,
+    defaultHeight: 110,
+    lockAspect: true,
+  },
+  {
+    category: 'material',
+    type: 'L',
+    labelKo: 'ㄴ자',
+    defaultWidth: 130,
+    defaultHeight: 130,
+    lockAspect: false,
+  },
+  {
+    category: 'material',
+    type: 'circle',
+    labelKo: '원',
+    defaultWidth: 110,
+    defaultHeight: 110,
+    lockAspect: true,
+  },
   // ── 공간 도형 (자재 없음, 라벨만) ──
-  { category: 'space', type: 'door', labelKo: '문', defaultWidth: 90, defaultHeight: 50, lockAspect: false, defaultLabel: '문' },
-  { category: 'space', type: 'office', labelKo: '사무실', defaultWidth: 160, defaultHeight: 100, lockAspect: false, defaultLabel: '사무실' },
-  { category: 'space', type: 'etc', labelKo: '기타', defaultWidth: 130, defaultHeight: 90, lockAspect: false, defaultLabel: '기타' },
+  {
+    category: 'space',
+    type: 'door',
+    labelKo: '문',
+    defaultWidth: 90,
+    defaultHeight: 50,
+    lockAspect: false,
+    defaultLabel: '문',
+  },
+  {
+    category: 'space',
+    type: 'office',
+    labelKo: '사무실',
+    defaultWidth: 160,
+    defaultHeight: 100,
+    lockAspect: false,
+    defaultLabel: '사무실',
+  },
+  {
+    category: 'space',
+    type: 'etc',
+    labelKo: '기타',
+    defaultWidth: 130,
+    defaultHeight: 90,
+    lockAspect: false,
+    defaultLabel: '기타',
+  },
 ] as const;
 
 /** type → 카탈로그 항목 조회 */
 export function shapeCatalogOf(type: IShapeType): IShapeCatalogItem {
-  const item = SHAPE_CATALOG.find((c) => c.type === type);
+  const item = SHAPE_CATALOG.find(c => c.type === type);
   if (!item) throw new Error(`알 수 없는 도형 type: ${type}`);
   return item;
 }

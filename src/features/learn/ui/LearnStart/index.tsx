@@ -26,7 +26,9 @@ export default function LearnStart({ visible, count, onClose, onPick }: Props) {
           </Text>
         ) : (
           <>
-            <Text style={[typography.metadata, styles.muted]}>자재 이름 라벨을 가리고 퀴즈를 냅니다.</Text>
+            <Text style={[typography.metadata, styles.muted]}>
+              자재 이름 라벨을 가리고 퀴즈를 냅니다.
+            </Text>
             <Pressable onPress={() => onPick('position')} style={styles.card}>
               <Text style={typography.taskTitle}>📍 위치 맞히기</Text>
               <Text style={typography.metadata}>자재 이름을 보고 평면도에서 도형을 찾습니다.</Text>
