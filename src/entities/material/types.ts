@@ -7,5 +7,6 @@ export interface IMaterial {
   layerOrder: number; // 랙 안 층 순서
   name: string; // 필수
   description?: string;
+  tags?: string[]; // 자재 태그(검색·식별용). 다중. DB엔 JSON 배열로 저장
   imageUri?: string; // 앱 로컬 복사본 경로
 }

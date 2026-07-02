@@ -5,11 +5,13 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { migrate } from '@shared/db';
@@ -32,20 +34,24 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <SafeAreaProvider>
-        <StatusBar style='dark' />
-        <Stack
-          screenOptions={{
-            headerStyle: { backgroundColor: colors.canvas },
-            headerTintColor: colors.textPrimary,
-            headerTitleStyle: { color: colors.textPrimary },
-            contentStyle: { backgroundColor: colors.canvas },
-          }}
-        >
-          <Stack.Screen name='index' options={{ title: '평면도' }} />
-          <Stack.Screen name='project/[id]' options={{ title: '도형 편집기' }} />
-        </Stack>
-      </SafeAreaProvider>
+      <KeyboardProvider>
+        <SafeAreaProvider>
+          <BottomSheetModalProvider>
+            <StatusBar style='dark' />
+            <Stack
+              screenOptions={{
+                headerStyle: { backgroundColor: colors.canvas },
+                headerTintColor: colors.textPrimary,
+                headerTitleStyle: { color: colors.textPrimary },
+                contentStyle: { backgroundColor: colors.canvas },
+              }}
+            >
+              <Stack.Screen name='index' options={{ title: '평면도' }} />
+              <Stack.Screen name='project/[id]' options={{ title: '도형 편집기' }} />
+            </Stack>
+          </BottomSheetModalProvider>
+        </SafeAreaProvider>
+      </KeyboardProvider>
     </GestureHandlerRootView>
   );
 }

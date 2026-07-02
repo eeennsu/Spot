@@ -53,6 +53,12 @@ export const colors = {
   /** 체크박스 테두리 미완료 (= textTertiary) (DESIGN.md §2 Checkbox Border) */
   checkboxBorder: '#C7C7CC',
 
+  // ── 도화지(평면도 배치 영역) ──────────────────
+  /** 도화지 면 — 순백(캔버스 바깥 surface1 위에서 떠 보이게) */
+  board: '#FFFFFF',
+  /** 도화지 경계 — 크기 제한을 알리는 검은 테두리(잉크) */
+  boardBorder: '#1D1D1F',
+
   // ── 유틸 ──────────────────────────────────────
   /** 투명 — 테두리 자리 유지용(선택 전 swatch 등) */
   transparent: 'transparent',

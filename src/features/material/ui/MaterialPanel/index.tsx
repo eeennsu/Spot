@@ -1,11 +1,13 @@
 // 자재 패널 — 한 랙(도형)의 층별 자재. editable=Edit(CRUD/순서), false=Viewer(읽기·펼침).
 // 데이터는 useMaterialPanel 훅 경유. 이미지는 로컬 복사. 토큰만 사용.
+import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import LocalImage from '@shared/components/customs/LocalImage';
 import { colors, radius, spacing, typography } from '@shared/theme';
 
+import { DEFAULT_MATERIAL_NAME } from '@entities/material/consts';
 import type { IMaterial } from '@entities/material/types';
 
 import { useMaterialImagePick } from '@features/material/hooks/useMaterialImagePick';
@@ -33,7 +35,13 @@ export default function MaterialPanel({ shapeId, title, editable }: Props) {
         <Text style={typography.metadata}>자재 {materials.length}개</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps='handled'>
+      <BottomSheetScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.list}
+        keyboardShouldPersistTaps='handled'
+        overScrollMode='never'
+        showsVerticalScrollIndicator={false}
+      >
         {loaded && materials.length === 0 ? (
           <Text style={[typography.body, styles.empty]}>
             {editable ? '자재가 없습니다. 아래에서 추가하세요.' : '등록된 자재가 없습니다.'}
@@ -50,8 +58,14 @@ export default function MaterialPanel({ shapeId, title, editable }: Props) {
               isLast={idx === sorted.length - 1}
               onChange={patch => updateMaterial(m.id, patch)}
               onPickImage={async () => {
-                const uri = await pickImage(m.id);
-                if (uri) updateMaterial(m.id, { imageUri: uri });
+                const picked = await pickImage(m.id);
+                if (!picked) return;
+                // 이름을 아직 안 건드렸으면(기본값) 파일명을 기본 이름으로.
+                const keepName = m.name && m.name !== DEFAULT_MATERIAL_NAME;
+                updateMaterial(m.id, {
+                  imageUri: picked.uri,
+                  ...(keepName || !picked.suggestedName ? {} : { name: picked.suggestedName }),
+                });
               }}
               onDelete={() => removeMaterial(m.id)}
               onMove={dir => move(m.id, dir)}
@@ -60,7 +74,7 @@ export default function MaterialPanel({ shapeId, title, editable }: Props) {
             <ReadCard key={m.id} material={m} layerNo={idx + 1} />
           ),
         )}
-      </ScrollView>
+      </BottomSheetScrollView>
 
       {editable ? (
         <Pressable
@@ -107,19 +121,26 @@ function EditCard({
           <View style={styles.layerRow}>
             <Text style={styles.layerBadge}>{layerNo}층</Text>
           </View>
-          <TextInput
+          <BottomSheetTextInput
+            key={material.name}
             style={styles.nameInput}
             defaultValue={material.name}
-            onEndEditing={e => onChange({ name: e.nativeEvent.text.trim() || '새 자재' })}
+            onEndEditing={e =>
+              onChange({ name: e.nativeEvent.text.trim() || DEFAULT_MATERIAL_NAME })
+            }
             placeholder='자재 이름 (필수)'
             placeholderTextColor={colors.textTertiary}
             selectionColor={colors.blue}
           />
-          <TextInput
+          <TagEditor
+            tags={material.tags ?? []}
+            onChange={tags => onChange({ tags: tags.length ? tags : undefined })}
+          />
+          <BottomSheetTextInput
             style={styles.descInput}
             defaultValue={material.description ?? ''}
             onEndEditing={e => onChange({ description: e.nativeEvent.text.trim() || undefined })}
-            placeholder='설명 (선택)'
+            placeholder='설명'
             placeholderTextColor={colors.textTertiary}
             selectionColor={colors.blue}
             multiline
@@ -161,10 +182,29 @@ function ReadCard({ material, layerNo }: { material: IMaterial; layerNo: number 
       style={({ pressed }) => [styles.card, pressed && hasDetail && styles.cardPressed]}
     >
       <View style={styles.readRow}>
-        <Text style={styles.layerBadge}>{layerNo}층</Text>
-        <Text style={[typography.taskTitle, styles.readName]} numberOfLines={1}>
-          {material.name}
-        </Text>
+        {material.imageUri ? <LocalImage uri={material.imageUri} style={styles.readThumb} /> : null}
+        <View style={styles.readMain}>
+          <View style={styles.readNameLine}>
+            <Text style={styles.layerBadge}>{layerNo}층</Text>
+            <Text style={[typography.taskTitle, styles.readName]} numberOfLines={1}>
+              {material.name}
+            </Text>
+          </View>
+          {material.tags?.length ? (
+            <View style={styles.readTags}>
+              {material.tags.map(t => (
+                <Text key={t} style={styles.tagChipText} numberOfLines={1}>
+                  #{t}
+                </Text>
+              ))}
+            </View>
+          ) : null}
+          {!open && material.description ? (
+            <Text style={styles.descPreview} numberOfLines={1}>
+              {material.description}
+            </Text>
+          ) : null}
+        </View>
         {hasDetail ? <Text style={styles.chev}>{open ? '▾' : '▸'}</Text> : null}
       </View>
       {open ? (
@@ -181,8 +221,48 @@ function ReadCard({ material, layerNo }: { material: IMaterial; layerNo: number 
   );
 }
 
+// ── 태그 편집기 — 칩 추가/삭제. 입력 후 Enter 또는 blur 시 추가, 칩 탭 시 삭제 ──
+function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string[]) => void }) {
+  const [draft, setDraft] = useState('');
+
+  const add = () => {
+    const t = draft.trim();
+    setDraft('');
+    if (!t || tags.includes(t)) return;
+    onChange([...tags, t]);
+  };
+
+  return (
+    <View style={styles.tagWrap}>
+      {tags.map(t => (
+        <Pressable
+          key={t}
+          onPress={() => onChange(tags.filter(x => x !== t))}
+          style={styles.tagChip}
+        >
+          <Text style={styles.tagChipText}>{t}</Text>
+          <Text style={styles.tagChipX}>×</Text>
+        </Pressable>
+      ))}
+      <BottomSheetTextInput
+        style={styles.tagInput}
+        value={draft}
+        onChangeText={setDraft}
+        onSubmitEditing={add}
+        onEndEditing={add}
+        placeholder={tags.length ? '태그 추가' : '태그 (검색용)'}
+        placeholderTextColor={colors.textTertiary}
+        selectionColor={colors.blue}
+        submitBehavior='submit'
+        returnKeyType='done'
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  root: { paddingHorizontal: spacing.xl, gap: spacing.md, flexShrink: 1 },
+  root: { flex: 1, paddingHorizontal: spacing.xl, gap: spacing.md },
+  scroll: { flex: 1 },
   spacer: { flex: 1 },
   header: {
     flexDirection: 'row',
@@ -221,6 +301,33 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     minHeight: 32,
   },
+  tagWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+  },
+  tagChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: colors.blueTint,
+    paddingLeft: spacing.sm,
+    paddingRight: spacing.xs,
+    paddingVertical: 3,
+    borderRadius: radius.soft,
+  },
+  tagChipText: { ...typography.metadata, color: colors.blue },
+  tagChipX: { ...typography.metadata, color: colors.blue, fontSize: 15 },
+  tagInput: {
+    ...typography.body,
+    color: colors.textPrimary,
+    minWidth: 96,
+    flexGrow: 1,
+    paddingVertical: spacing.xs,
+  },
+  readTags: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   cardActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   miniBtn: {
     minWidth: 44,
@@ -235,7 +342,11 @@ const styles = StyleSheet.create({
   deleteMini: { backgroundColor: colors.canvas },
   miniIcon: { ...typography.metadata, color: colors.textPrimary },
   readRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  readName: { flex: 1 },
+  readThumb: { width: 44, height: 44, borderRadius: radius.soft },
+  readMain: { flex: 1, gap: spacing.xs },
+  readNameLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  readName: { flexShrink: 1 },
+  descPreview: { ...typography.metadata, color: colors.textSecondary },
   chev: { ...typography.body, color: colors.textSecondary },
   readDetail: { gap: spacing.sm, paddingTop: spacing.xs },
   readImage: { width: '100%', height: 180 },

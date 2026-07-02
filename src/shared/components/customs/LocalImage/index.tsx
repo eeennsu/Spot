@@ -1,4 +1,5 @@
 // 앱 로컬 이미지 표시 래퍼 — 파일 유실 시 플레이스홀더. 이 앱은 사진이 전부 로컬.
+import { ImageOff } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
   Image,
@@ -50,7 +51,7 @@ export default function LocalImage({ uri, style, emptyLabel = '사진 없음' }:
 
   return (
     <View style={[styles.base, styles.placeholder, style]}>
-      <Text style={styles.icon}>🖼️</Text>
+      <ImageOff size={20} color={colors.textTertiary} strokeWidth={2} />
       <Text style={[typography.metadata, styles.label]} numberOfLines={1}>
         {status === 'checking' ? '' : emptyLabel}
       </Text>
@@ -65,6 +66,5 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   placeholder: { alignItems: 'center', justifyContent: 'center', gap: 2 },
-  icon: { fontSize: 20 },
   label: { color: colors.textTertiary },
 });

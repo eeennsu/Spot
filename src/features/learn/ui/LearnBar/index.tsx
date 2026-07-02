@@ -1,4 +1,5 @@
 // 학습 하단 바 — 진행/점수/문제/피드백. 위치=캔버스 탭으로 응답, 이름=보기 선택.
+import { Check, X } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -89,14 +90,21 @@ function PositionBody({
       </Text>
       {answered ? (
         <Animated.View entering={FadeIn.duration(150)} style={styles.feedbackRow}>
-          <Text
-            style={[
-              typography.button,
-              { color: answered === 'correct' ? colors.success : colors.deadline },
-            ]}
-          >
-            {answered === 'correct' ? '✓ 정답' : '✗ 오답'}
-          </Text>
+          <View style={styles.feedbackLabel}>
+            {answered === 'correct' ? (
+              <Check size={16} color={colors.success} strokeWidth={2.5} />
+            ) : (
+              <X size={16} color={colors.deadline} strokeWidth={2.5} />
+            )}
+            <Text
+              style={[
+                typography.button,
+                { color: answered === 'correct' ? colors.success : colors.deadline },
+              ]}
+            >
+              {answered === 'correct' ? '정답' : '오답'}
+            </Text>
+          </View>
           <Pressable onPress={onNext} style={[styles.actBtn, styles.actPrimary]}>
             <Text style={[typography.button, { color: colors.canvas }]}>다음</Text>
           </Pressable>
@@ -168,6 +176,7 @@ const styles = StyleSheet.create({
   closeBtn: { minHeight: 36, justifyContent: 'center' },
   body: { gap: spacing.sm },
   feedbackRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  feedbackLabel: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   choices: { gap: spacing.sm },
   choice: {
     minHeight: 48,

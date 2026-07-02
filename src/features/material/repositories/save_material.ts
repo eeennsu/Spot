@@ -14,14 +14,15 @@ export default async function repoMaterialSave(material: IMaterial): Promise<voi
   const createdAt = prev?.created_at ?? now;
   db.runSync(
     `INSERT OR REPLACE INTO ${MATERIAL_TABLE}
-      (id, shape_id, layer_order, name, description, image_uri, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      (id, shape_id, layer_order, name, description, tags, image_uri, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       material.id,
       material.shapeId,
       material.layerOrder,
       material.name,
       material.description ?? null,
+      material.tags?.length ? JSON.stringify(material.tags) : null,
       material.imageUri ?? null,
       createdAt,
       now,

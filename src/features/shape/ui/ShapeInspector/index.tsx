@@ -1,9 +1,9 @@
-// 선택 도형 인스펙터 — Edit 하단 패널. 색/별칭/라벨(기타)/회전/삭제.
+// 선택 도형 인스펙터 — Edit 하단 패널. 색/별칭/라벨(기타)/자재 층 관리/삭제.
+import { ChevronRight } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { colors, palette, radius, spacing, typography } from '@shared/theme';
 
-import { SHAPE_ROTATE_STEP } from '@entities/shape/consts';
 import type { IShape } from '@entities/shape/types';
 
 interface Props {
@@ -24,11 +24,6 @@ export default function ShapeInspector({
 }: Props) {
   const isSpace = shape.category === 'space';
   const labelEditable = shape.type === 'etc';
-
-  const rotate = (delta: number) => {
-    const next = (((Math.round(shape.rotation) + delta) % 360) + 360) % 360;
-    onUpdate({ rotation: next });
-  };
 
   return (
     <View style={styles.panel}>
@@ -61,7 +56,7 @@ export default function ShapeInspector({
 
       {/* 별칭 (검색 대상) */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>별칭 (검색용 · 선택)</Text>
+        <Text style={styles.sectionLabel}>별칭</Text>
         <TextInput
           style={styles.input}
           defaultValue={shape.alias ?? ''}
@@ -89,21 +84,14 @@ export default function ShapeInspector({
         </View>
       )}
 
-      {/* 자재 관리 (자재 도형만) */}
-      {!isSpace && onManageMaterials ? (
-        <Pressable onPress={onManageMaterials} style={styles.manageBtn}>
-          <Text style={[typography.button, { color: colors.blue }]}>자재 층 관리 →</Text>
-        </Pressable>
-      ) : null}
-
-      {/* 회전 + 삭제 */}
+      {/* 자재 층 관리 + 삭제 */}
       <View style={styles.actionRow}>
-        <Pressable onPress={() => rotate(-SHAPE_ROTATE_STEP)} style={styles.actionBtn}>
-          <Text style={typography.button}>⟲ {SHAPE_ROTATE_STEP}°</Text>
-        </Pressable>
-        <Pressable onPress={() => rotate(SHAPE_ROTATE_STEP)} style={styles.actionBtn}>
-          <Text style={typography.button}>⟳ {SHAPE_ROTATE_STEP}°</Text>
-        </Pressable>
+        {!isSpace && onManageMaterials ? (
+          <Pressable onPress={onManageMaterials} style={[styles.actionBtn, styles.manageBtn]}>
+            <Text style={[typography.button, { color: colors.blue }]}>자재 층 관리</Text>
+            <ChevronRight size={18} color={colors.blue} strokeWidth={2} />
+          </Pressable>
+        ) : null}
         <Pressable onPress={onDelete} style={[styles.actionBtn, styles.deleteBtn]}>
           <Text style={[typography.button, { color: colors.canvas }]}>삭제</Text>
         </Pressable>
@@ -144,18 +132,23 @@ const styles = StyleSheet.create({
     ...typography.body,
   },
   manageBtn: {
+    flex: 3,
     minHeight: 48,
     borderRadius: radius.standard,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.xs,
     backgroundColor: colors.blueTint,
   },
   actionRow: { flexDirection: 'row', gap: spacing.sm, paddingBottom: spacing.sm },
   actionBtn: {
     flex: 1,
     minHeight: 44,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.xs,
     borderRadius: radius.standard,
     backgroundColor: colors.surface1,
   },

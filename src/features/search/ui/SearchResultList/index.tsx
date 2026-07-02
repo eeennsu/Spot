@@ -33,7 +33,13 @@ export default function SearchResultList({ results, hasQuery, showProject, onSel
           onPress={() => onSelect(item)}
           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
         >
-          <View style={[styles.dot, item.kind === 'alias' && styles.dotAlias]} />
+          <View
+            style={[
+              styles.dot,
+              item.kind === 'alias' && styles.dotAlias,
+              item.kind === 'tag' && styles.dotTag,
+            ]}
+          />
           <View style={styles.texts}>
             <Text style={typography.taskTitle} numberOfLines={1}>
               {item.matched}
@@ -62,6 +68,7 @@ const styles = StyleSheet.create({
   rowPressed: { backgroundColor: colors.surface1 },
   dot: { width: 8, height: 8, borderRadius: radius.circle, backgroundColor: colors.blue },
   dotAlias: { backgroundColor: colors.today },
+  dotTag: { backgroundColor: colors.success },
   texts: { flex: 1, gap: 2 },
   empty: { paddingVertical: spacing.xl3, alignItems: 'center' },
   emptyText: { color: colors.textSecondary },

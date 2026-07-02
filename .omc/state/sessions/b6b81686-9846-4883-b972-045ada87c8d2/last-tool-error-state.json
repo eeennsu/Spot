@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"while kill -0 %1 2>/dev/null; do :; done 2>/dev/null; cat /private/tmp/claude-501/-Users-wonderround-Documents-Git-porfolio-spot/b6b81686-9846-4883-b972-045ada87c8d2/tasks/bauysd18v.output...",
+  "error": "Exit code 143\nCommand timed out after 2m 0s",
+  "timestamp": "2026-06-28T03:20:38.357Z",
+  "retry_count": 1
+}

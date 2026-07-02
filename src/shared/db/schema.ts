@@ -2,7 +2,7 @@
 // 마이그레이션 배열: index = 적용 후 user_version. 추가 변경은 새 항목을 push.
 import { MATERIAL_TABLE } from '@entities/material/consts';
 import { PROJECT_TABLE } from '@entities/project/consts';
-import { SHAPE_TABLE } from '@entities/shape/consts';
+import { BOARD_HEIGHT, BOARD_WIDTH, SHAPE_TABLE } from '@entities/shape/consts';
 
 export const MIGRATIONS: string[] = [
   // v1 — 초기 전체 스키마(project / shape / material).
@@ -45,5 +45,23 @@ export const MIGRATIONS: string[] = [
   );
   CREATE INDEX IF NOT EXISTS idx_material_shape ON ${MATERIAL_TABLE}(shape_id);
   CREATE INDEX IF NOT EXISTS idx_material_name ON ${MATERIAL_TABLE}(name);
+  `,
+  // v2 — 자재 별명(alias) 추가.
+  `
+  ALTER TABLE ${MATERIAL_TABLE} ADD COLUMN alias TEXT;
+  CREATE INDEX IF NOT EXISTS idx_material_alias ON ${MATERIAL_TABLE}(alias);
+  `,
+  // v3 — 자재 별명(단일 텍스트) → 태그(JSON 배열). 기존 alias 는 단일 태그로 이관.
+  // tags 는 JSON 배열 문자열로 저장하고, 검색은 LIKE 부분 일치로 처리한다.
+  `
+  ALTER TABLE ${MATERIAL_TABLE} ADD COLUMN tags TEXT;
+  UPDATE ${MATERIAL_TABLE} SET tags = json_array(alias)
+    WHERE alias IS NOT NULL AND trim(alias) != '';
+  CREATE INDEX IF NOT EXISTS idx_material_tags ON ${MATERIAL_TABLE}(tags);
+  `,
+  // v4 — 프로젝트별 도화지 크기(board_width/board_height). 기존 행은 기본값으로 채운다.
+  `
+  ALTER TABLE ${PROJECT_TABLE} ADD COLUMN board_width REAL NOT NULL DEFAULT ${BOARD_WIDTH};
+  ALTER TABLE ${PROJECT_TABLE} ADD COLUMN board_height REAL NOT NULL DEFAULT ${BOARD_HEIGHT};
   `,
 ];

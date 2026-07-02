@@ -4,7 +4,7 @@ import * as SQLite from 'expo-sqlite';
 
 import { MIGRATIONS } from './schema';
 
-const DB_NAME = 'myspot.db';
+const DB_NAME = 'spot.db';
 
 let db: SQLite.SQLiteDatabase | null = null;
 let migrated = false;

@@ -3,17 +3,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, {
-  runOnJS,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import BottomSheet from '@shared/components/customs/BottomSheet';
-import { colors, spacing, typography } from '@shared/theme';
+import { useBottomSheet } from '@shared/components/customs/BottomSheet/useBottomSheet';
+import { colors, palette, radius, spacing, typography } from '@shared/theme';
 
+import { BOARD_MAX_SIZE, BOARD_MIN_SIZE } from '@entities/shape/consts';
 import type { IShape } from '@entities/shape/types';
 
 import { useLearnData } from '@features/learn/hooks/useLearnData';
@@ -24,6 +22,7 @@ import LearnStart from '@features/learn/ui/LearnStart';
 import { useProjectMaterials } from '@features/material/hooks/useProjectMaterials';
 import MaterialPanel from '@features/material/ui/MaterialPanel';
 import { useExportPdf } from '@features/pdf/hooks/useExportPdf';
+import { useProjectBoard } from '@features/project/hooks/useProjectBoard';
 import { useShapeCanvas } from '@features/shape/hooks/useShapeCanvas';
 import { useEditorStore } from '@features/shape/stores/editor';
 import ShapeInspector from '@features/shape/ui/ShapeInspector';
@@ -45,8 +44,12 @@ interface Props {
   projectName?: string;
 }
 
-const MIN_SCALE = 0.5;
+const MIN_SCALE = 0.2;
 const MAX_SCALE = 3;
+/** 도화지가 화면에 들어차는 비율(가장자리 여백 확보) */
+const BOARD_FIT_RATIO = 0.92;
+/** 도화지 리사이즈 핸들 지름(dp) */
+const HANDLE = 28;
 
 export default function ProjectCanvas({
   projectId,
@@ -58,6 +61,9 @@ export default function ProjectCanvas({
   const canvasRef = useRef<View>(null);
   const { exportPdf, exporting } = useExportPdf();
   const { shapes, loaded, addShape, updateShape, removeShape } = useShapeCanvas(projectId);
+  // 프로젝트별 도화지 크기(조절 대상). board.{w,h} 는 JS 값(ShapeView 클램프용),
+  // boardW/boardH shared 는 드래그 중 실시간 렌더용.
+  const { board, loaded: boardLoaded, save: saveBoard } = useProjectBoard(projectId);
 
   const mode = useEditorStore(s => s.mode);
   const selectedId = useEditorStore(s => s.selectedShapeId);
@@ -77,10 +83,30 @@ export default function ProjectCanvas({
   const startY = useSharedValue(0);
   const startScale = useSharedValue(1);
 
+  // 도화지 크기 shared(드래그 실시간 렌더). 시작 스냅샷은 핸들 드래그 보정용.
+  const boardW = useSharedValue(board.w);
+  const boardH = useSharedValue(board.h);
+  const startBoardW = useSharedValue(board.w);
+  const startBoardH = useSharedValue(board.h);
+
+  // DB 로드/저장 결과를 shared value 에 반영.
+  useEffect(() => {
+    boardW.value = board.w;
+    boardH.value = board.h;
+  }, [board.w, board.h, boardW, boardH]);
+
   const canvasPanRef = useRef<unknown>(undefined);
 
-  // 자재 패널(바텀시트) 대상 도형
+  // 자재 패널(바텀시트) — ref 주입 제어 + 대상 도형 데이터
+  const materialSheet = useBottomSheet();
+  const learnSheet = useBottomSheet();
   const [sheetShape, setSheetShape] = useState<IShape | null>(null);
+
+  // 자재 시트 열기: 데이터 세팅 후 present(ref). 콘텐츠 마운트 뒤 다음 틱에 열린다.
+  const openMaterialSheet = (shape: IShape) => {
+    setSheetShape(shape);
+    materialSheet.present();
+  };
 
   // Viewer 캔버스 라벨용 자재명 맵
   const { namesByShape, reload: reloadMaterials } = useProjectMaterials(projectId);
@@ -94,7 +120,6 @@ export default function ProjectCanvas({
   const startLearnStore = useLearnStore(s => s.start);
   const answerPosition = useLearnStore(s => s.answerPosition);
   const stopLearn = useLearnStore(s => s.stop);
-  const [learnChooser, setLearnChooser] = useState(false);
 
   // 학습 중 편집 진입 시 학습 종료(혼선 방지).
   useEffect(() => {
@@ -106,8 +131,8 @@ export default function ProjectCanvas({
 
   const startLearn = async (type: ILearnType) => {
     const set = await reloadQuiz();
-    setSheetShape(null);
-    setLearnChooser(false);
+    materialSheet.dismiss();
+    learnSheet.dismiss();
     startLearnStore(type, set.position, set.name);
   };
 
@@ -120,6 +145,21 @@ export default function ProjectCanvas({
   const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 });
   const [highlightId, setHighlightId] = useState<string | null>(null);
 
+  // 최초 측정 시 도화지를 화면에 맞춰 가운데 정렬(크기 제한 공간 인지).
+  const didFit = useRef(false);
+  useEffect(() => {
+    if (didFit.current || canvasSize.w === 0 || !boardLoaded) return;
+    didFit.current = true;
+    const fit = Math.min(canvasSize.w / board.w, canvasSize.h / board.h) * BOARD_FIT_RATIO;
+    const s = Math.min(Math.max(fit, MIN_SCALE), MAX_SCALE);
+    // 스케일 원점은 캔버스 중심: 보드 중심을 화면 중심에 맞춘다.
+    scale.value = s;
+    panX.value = (canvasSize.w / 2 - board.w / 2) * s;
+    panY.value = (canvasSize.h / 2 - board.h / 2) * s;
+    // shared value(안정 참조)라 deps 제외
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canvasSize.w, canvasSize.h, boardLoaded]);
+
   // 검색 결과 포커스: 중앙 정렬 + 하이라이트 + 자재면 시트.
   useEffect(() => {
     if (!focusShapeId || !loaded || canvasSize.w === 0) return;
@@ -129,22 +169,28 @@ export default function ProjectCanvas({
     panX.value = withTiming(canvasSize.w / 2 - (target.x + target.width / 2), { duration: 260 });
     panY.value = withTiming(canvasSize.h / 2 - (target.y + target.height / 2), { duration: 260 });
     setHighlightId(target.id);
-    if (target.category === 'material') setSheetShape(target);
+    if (target.category === 'material') openMaterialSheet(target);
     const t = setTimeout(() => setHighlightId(null), 1800);
     return () => clearTimeout(t);
     // panX/panY/scale 는 shared value(안정 참조)라 deps 제외
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusShapeId, loaded, canvasSize.w, canvasSize.h, shapes]);
 
-  const captionOf = (shape: IShape): string | undefined => {
+  const captionOf = (shape: IShape): { name: string; extra: number } | undefined => {
     if (shape.category !== 'material') return undefined;
     const names = namesByShape[shape.id];
     if (!names || names.length === 0) return undefined;
-    return names.length > 1 ? `${names[0]}  +${names.length - 1}` : names[0];
+    return { name: names[0], extra: names.length - 1 };
   };
+
+  // 시트 열림 동안 캔버스 제스처를 끈다. RNGH 제스처 중재는 GestureHandlerRootView 전역이라,
+  // 시트 위로 스와이프해도 아래 캔버스 pan/pinch가 같은 터치를 노려 시트 스크롤과 경쟁한다.
+  // → 첫 몇 번 스와이프가 캔버스로 먹혀 "여러 번 당겨야 스크롤됨" 증상. 시트 열리면 캔버스 제스처 비활성.
+  const sheetOpen = !!sheetShape;
 
   const pan = Gesture.Pan()
     .withRef(canvasPanRef as never)
+    .enabled(!sheetOpen)
     .averageTouches(true)
     .onBegin(() => {
       startX.value = panX.value;
@@ -156,6 +202,7 @@ export default function ProjectCanvas({
     });
 
   const pinch = Gesture.Pinch()
+    .enabled(!sheetOpen)
     .onBegin(() => {
       startScale.value = scale.value;
     })
@@ -164,11 +211,37 @@ export default function ProjectCanvas({
       scale.value = Math.min(Math.max(next, MIN_SCALE), MAX_SCALE);
     });
 
-  const tapBackground = Gesture.Tap().onEnd(() => {
-    runOnJS(select)(null);
-  });
+  const tapBackground = Gesture.Tap()
+    .enabled(!sheetOpen)
+    .onEnd(() => {
+      scheduleOnRN(select, null);
+    });
 
   const canvasGesture = Gesture.Race(tapBackground, Gesture.Simultaneous(pan, pinch));
+
+  // 도화지 우하단 핸들 드래그 → 보드 크기 조절(좌상단 고정). 종료 시 DB 저장.
+  const boardResize = Gesture.Pan()
+    .onBegin(() => {
+      startBoardW.value = boardW.value;
+      startBoardH.value = boardH.value;
+    })
+    .onUpdate(e => {
+      const nw = startBoardW.value + e.translationX / scale.value;
+      const nh = startBoardH.value + e.translationY / scale.value;
+      boardW.value = Math.min(Math.max(nw, BOARD_MIN_SIZE), BOARD_MAX_SIZE);
+      boardH.value = Math.min(Math.max(nh, BOARD_MIN_SIZE), BOARD_MAX_SIZE);
+    })
+    .onEnd(() => {
+      scheduleOnRN(saveBoard, Math.round(boardW.value), Math.round(boardH.value));
+    });
+  boardResize.blocksExternalGesture(canvasPanRef as never);
+
+  const boardStyle = useAnimatedStyle(() => ({ width: boardW.value, height: boardH.value }));
+
+  // 핸들을 보드 우하단 모서리에 붙인다(보드 변환 안에 위치 → pan/zoom 따라감).
+  const boardHandleStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: boardW.value - HANDLE / 2 }, { translateY: boardH.value - HANDLE / 2 }],
+  }));
 
   const contentStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: panX.value }, { translateY: panY.value }, { scale: scale.value }],
@@ -182,7 +255,7 @@ export default function ProjectCanvas({
     }
     if (shape.category !== 'material') return;
     onTapMaterialShape?.(shape);
-    setSheetShape(shape); // 읽기전용 자재 패널
+    openMaterialSheet(shape); // 읽기전용 자재 패널
   };
 
   const onDelete = async () => {
@@ -208,6 +281,8 @@ export default function ProjectCanvas({
         </GestureDetector>
 
         <Animated.View style={[StyleSheet.absoluteFill, contentStyle]} pointerEvents='box-none'>
+          {/* 도화지 — 크기 제한 있는 배치 영역(검은 테두리). 시각용이라 터치 통과. */}
+          <View style={styles.board} pointerEvents='none' />
           {shapes.map(shape => (
             <ShapeView
               key={shape.id}
@@ -236,16 +311,17 @@ export default function ProjectCanvas({
         ) : null}
       </View>
 
-      {/* Edit 하단: 인스펙터(선택 시) 또는 팔레트 */}
+      {/* Edit 하단: 인스펙터(선택 시) 또는 팔레트.
+          오버레이로 띄워 캔버스(도화지) 높이를 고정 — 인스펙터 열려도 도화지 안 움직임. */}
       {editable ? (
-        <View style={{ paddingBottom: insets.bottom }}>
+        <View style={[styles.editBar, { paddingBottom: insets.bottom }]}>
           {selectedShape ? (
             <ShapeInspector
               shape={selectedShape}
               onUpdate={patch => updateShape(selectedShape.id, patch)}
               onDelete={onDelete}
               onClose={() => select(null)}
-              onManageMaterials={() => setSheetShape(selectedShape)}
+              onManageMaterials={() => openMaterialSheet(selectedShape)}
             />
           ) : (
             <View style={styles.paletteWrap}>
@@ -259,7 +335,7 @@ export default function ProjectCanvas({
       {!editable && !learnActive ? (
         <>
           <Pressable
-            onPress={() => setLearnChooser(true)}
+            onPress={() => learnSheet.present()}
             style={[styles.fab, styles.fabSecondary, { bottom: insets.bottom + spacing.xl + 60 }]}
           >
             <Text style={[styles.fabText, { color: colors.blue }]}>학습</Text>
@@ -284,15 +360,10 @@ export default function ProjectCanvas({
       {learnActive ? <LearnBar onRestart={() => startLearn(learnType)} /> : null}
 
       {/* 학습 시작 선택 시트 */}
-      <LearnStart
-        visible={learnChooser}
-        count={learnCount}
-        onClose={() => setLearnChooser(false)}
-        onPick={startLearn}
-      />
+      <LearnStart sheetRef={learnSheet.ref} count={learnCount} onPick={startLearn} />
 
       {/* 자재 패널 바텀시트 — Edit=편집 / Viewer=읽기 */}
-      <BottomSheet visible={!!sheetShape} onClose={() => setSheetShape(null)}>
+      <BottomSheet ref={materialSheet.ref} onClose={() => setSheetShape(null)} maxHeightRatio={0.7}>
         {sheetShape ? (
           <MaterialPanel
             shapeId={sheetShape.id}
@@ -307,7 +378,19 @@ export default function ProjectCanvas({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.canvas },
-  canvas: { flex: 1, overflow: 'hidden', backgroundColor: colors.canvas },
+  // 도화지 바깥은 옅은 회색 → 흰 도화지가 떠 보이고 경계가 분명해짐.
+  canvas: { flex: 1, overflow: 'hidden', backgroundColor: colors.surface1 },
+  board: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: BOARD_WIDTH,
+    height: BOARD_HEIGHT,
+    backgroundColor: colors.board,
+    borderWidth: 2,
+    borderColor: colors.boardBorder,
+    borderRadius: radius.soft,
+  },
   empty: {
     position: 'absolute',
     top: 0,
@@ -319,6 +402,13 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   emptyText: { color: colors.textSecondary, textAlign: 'center' },
+  editBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.canvas,
+  },
   paletteWrap: {
     borderTopWidth: 1,
     borderTopColor: colors.divider,

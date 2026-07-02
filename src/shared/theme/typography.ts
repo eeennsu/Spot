@@ -176,6 +176,18 @@ export const typography = {
   } satisfies TextStyle,
 
   /**
+   * 도형 위 공간 라벨(문·사무실·기타) — 작은 캔버스에서도 안 넘치게 소형.
+   */
+  shapeLabel: {
+    fontFamily: fontFamily.semibold,
+    fontWeight: '600' as const,
+    fontSize: 11,
+    lineHeight: 13,
+    letterSpacing: 0,
+    color: colors.textPrimary,
+  } satisfies TextStyle,
+
+  /**
    * 소형 대문자 라벨 — "THIS EVENING" 섹션 구분.
    * DESIGN-expo.md §2 tinyUpper / DESIGN.md §3 Tiny Label (UPPER) 12/700/1.2/+0.5
    */

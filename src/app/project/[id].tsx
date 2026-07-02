@@ -1,6 +1,7 @@
 // 프로젝트 상세 = 도형 편집기 셸. Entry/Body 분리(헤더 즉시 + 캔버스 지연 마운트).
 // 데이터 접근은 features/*/hooks 경유. 모드 토글은 editor store.
 import { Stack, useLocalSearchParams } from 'expo-router';
+import { Search } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -51,7 +52,7 @@ export default function ProjectDetailScreen() {
                 hitSlop={10}
                 style={styles.headerBtn}
               >
-                <Text style={styles.searchIcon}>🔍</Text>
+                <Search size={18} color={colors.textPrimary} strokeWidth={2} />
               </Pressable>
               <EditToggle />
             </View>
@@ -95,5 +96,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.xs,
   },
-  searchIcon: { fontSize: 18 },
 });

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { utilCreateId } from '@shared/utils/util_id';
 import { utilDeleteAppImage } from '@shared/utils/util_image';
 
+import { DEFAULT_MATERIAL_NAME } from '@entities/material/consts';
 import type { IMaterial } from '@entities/material/types';
 
 import repoMaterialDelete from '../repositories/delete_material';
@@ -31,7 +32,7 @@ export function useMaterialPanel(shapeId: string) {
       id: utilCreateId(),
       shapeId,
       layerOrder: nextOrder,
-      name: '새 자재',
+      name: DEFAULT_MATERIAL_NAME,
     };
     await repoMaterialSave(material);
     setMaterials(prev => [...prev, material]);

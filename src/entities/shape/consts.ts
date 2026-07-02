@@ -11,6 +11,18 @@ export const SHAPE_MAX_SIZE = 2000 as const;
 /** 신규 도형 회전 스텝(도) */
 export const SHAPE_ROTATE_STEP = 15 as const;
 
+/**
+ * 도화지(평면도 배치 영역) 기본 크기(dp) — 신규 프로젝트 생성 시 초기값.
+ * 무한 캔버스가 아니라 "크기 제한 있는 공간"임을 사용자에게 보여주는 기준.
+ * 실제 크기는 프로젝트별로 DB(project.board_width/board_height)에 저장한다.
+ */
+export const BOARD_WIDTH = 1200 as const;
+export const BOARD_HEIGHT = 1600 as const;
+
+/** 도화지 리사이즈 최소/최대 변 길이(dp) — 폭주 방지 */
+export const BOARD_MIN_SIZE = 400 as const;
+export const BOARD_MAX_SIZE = 4000 as const;
+
 /** 도형 종류 키 */
 export type IShapeType = IShapeMaterialType | IShapeSpaceType;
 

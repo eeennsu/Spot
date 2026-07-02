@@ -4,11 +4,11 @@ import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   type SharedValue,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { colors, palette, pickOnFill, radius, spacing, typography } from '@shared/theme';
 
@@ -25,13 +25,16 @@ interface Props {
   selected: boolean;
   /** 캔버스 줌 배율(제스처 델타 보정용) */
   scale: SharedValue<number>;
+  /** 도화지 경계(이동·리사이즈 클램프 기준) — 프로젝트별 크기 */
+  boardWidth: number;
+  boardHeight: number;
   /** 캔버스 pan 제스처 ref — 도형 조작 시 캔버스 이동 차단 */
   canvasPanRef: GestureRef;
   onSelect: (id: string) => void;
   onTapViewer: (shape: IShape) => void;
   onCommit: (id: string, patch: Partial<IShape>) => void;
-  /** Viewer 에서 자재 도형에 표시할 캡션(대표 자재명 + N) */
-  caption?: string;
+  /** Viewer 에서 자재 도형에 표시할 캡션(대표 자재명 + 추가 개수) */
+  caption?: { name: string; extra: number };
   /** 검색 결과 이동 시 일시 하이라이트 */
   highlighted?: boolean;
 }
@@ -43,6 +46,8 @@ export default function ShapeView({
   editable,
   selected,
   scale,
+  boardWidth,
+  boardHeight,
   canvasPanRef,
   onSelect,
   onTapViewer,
@@ -73,24 +78,32 @@ export default function ShapeView({
     transform: [{ translateX: tx.value }, { translateY: ty.value }, { rotate: `${rot.value}deg` }],
   }));
 
+  // 도형 회전을 상쇄해 캡션/배지가 항상 수평으로 보이게 한다.
+  const counterRotateStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${-rot.value}deg` }],
+  }));
+
   // ── 탭: 선택(Edit) / 뷰어 콜백 ──
   const tap = Gesture.Tap().onEnd(() => {
-    if (editable) runOnJS(onSelect)(shape.id);
-    else runOnJS(onTapViewer)(shape);
+    if (editable) scheduleOnRN(onSelect, shape.id);
+    else scheduleOnRN(onTapViewer, shape);
   });
 
   // ── 드래그 이동(Edit) ──
   const drag = Gesture.Pan()
     .enabled(editable)
     .onBegin(() => {
-      runOnJS(onSelect)(shape.id);
+      scheduleOnRN(onSelect, shape.id);
     })
     .onUpdate(e => {
-      tx.value = shape.x + e.translationX / scale.value;
-      ty.value = shape.y + e.translationY / scale.value;
+      // 도화지 경계 안으로 제한 — 가장자리에 닿으면 딱 붙음.
+      const nx = shape.x + e.translationX / scale.value;
+      const ny = shape.y + e.translationY / scale.value;
+      tx.value = clamp(nx, 0, boardWidth - shape.width);
+      ty.value = clamp(ny, 0, boardHeight - shape.height);
     })
     .onEnd(() => {
-      runOnJS(onCommit)(shape.id, { x: tx.value, y: ty.value });
+      scheduleOnRN(onCommit, shape.id, { x: tx.value, y: ty.value });
     });
   if (canvasPanRef) drag.blocksExternalGesture(canvasPanRef as never);
 
@@ -101,14 +114,20 @@ export default function ShapeView({
     .onUpdate(e => {
       const dw = e.translationX / scale.value;
       const dh = e.translationY / scale.value;
-      const nw = clamp(shape.width + dw, SHAPE_MIN_SIZE, SHAPE_MAX_SIZE);
-      let nh = locked ? nw : clamp(shape.height + dh, SHAPE_MIN_SIZE, SHAPE_MAX_SIZE);
-      if (locked) nh = nw;
+      // 도화지 경계 넘지 않게 최대 크기 제한(좌상단 고정).
+      const maxW = Math.min(SHAPE_MAX_SIZE, boardWidth - shape.x);
+      const maxH = Math.min(SHAPE_MAX_SIZE, boardHeight - shape.y);
+      let nw = clamp(shape.width + dw, SHAPE_MIN_SIZE, maxW);
+      let nh = locked ? nw : clamp(shape.height + dh, SHAPE_MIN_SIZE, maxH);
+      if (locked) {
+        nw = Math.min(nw, maxH);
+        nh = nw;
+      }
       w.value = nw;
       h.value = nh;
     })
     .onEnd(() => {
-      runOnJS(onCommit)(shape.id, { width: w.value, height: h.value });
+      scheduleOnRN(onCommit, shape.id, { width: w.value, height: h.value });
     });
   if (canvasPanRef) resize.blocksExternalGesture(canvasPanRef as never);
 
@@ -118,7 +137,7 @@ export default function ShapeView({
       rot.value = shape.rotation + e.translationX * 0.5;
     })
     .onEnd(() => {
-      runOnJS(onCommit)(shape.id, { rotation: Math.round(rot.value) });
+      scheduleOnRN(onCommit, shape.id, { rotation: Math.round(rot.value) });
     });
   if (canvasPanRef) rotate.blocksExternalGesture(canvasPanRef as never);
 
@@ -132,13 +151,20 @@ export default function ShapeView({
         </Animated.View>
       </GestureDetector>
 
-      {/* Viewer 자재명 캡션 */}
-      {!editable && caption ? (
-        <View style={styles.caption} pointerEvents='none'>
+      {/* 자재명 캡션 — 도형 회전과 무관하게 항상 수평 (Viewer·Edit 공통) */}
+      {caption ? (
+        <Animated.View style={[styles.caption, counterRotateStyle]} pointerEvents='none'>
           <Text style={[typography.metadata, { color: pickOnFill(shape.color) }]} numberOfLines={2}>
-            {caption}
+            {caption.name}
           </Text>
-        </View>
+        </Animated.View>
+      ) : null}
+
+      {/* 추가 자재 개수 배지 — 도형 최우측 최상단 원형 */}
+      {caption && caption.extra > 0 ? (
+        <Animated.View style={[styles.countBadge, counterRotateStyle]} pointerEvents='none'>
+          <Text style={styles.countText}>+{caption.extra}</Text>
+        </Animated.View>
       ) : null}
 
       {/* 별칭 배지 */}
@@ -206,6 +232,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   aliasText: { ...typography.metadata, color: colors.canvas, fontSize: 11, lineHeight: 14 },
+  countBadge: {
+    position: 'absolute',
+    top: -spacing.sm,
+    right: -spacing.sm,
+    minWidth: 24,
+    height: 24,
+    paddingHorizontal: spacing.sm,
+    borderRadius: radius.circle,
+    backgroundColor: colors.canvas,
+    borderWidth: 1.5,
+    borderColor: colors.textPrimary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countText: { ...typography.metadata, color: colors.textPrimary, fontSize: 12, lineHeight: 15 },
   handle: {
     position: 'absolute',
     width: HANDLE,

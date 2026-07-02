@@ -1,86 +1,135 @@
-// 공용 바텀시트 — Modal + reanimated 슬라이드업. Android 뒤로가기 → 닫기.
-// 자재 패널(Phase 2 편집 / Phase 3 읽기) 등 재사용. 토큰만 사용.
-import type { ReactNode } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInDown } from 'react-native-reanimated';
+// 공용 바텀시트 — @gorhom/bottom-sheet v5(BottomSheetModal) 기반.
+// 제어는 visible state 가 아니라 ref 주입 방식(useBottomSheet 훅). woka_app 패턴.
+// dynamic=true: 콘텐츠 높이맞춤(짧은 시트). false(기본): maxHeightRatio 고정 높이(스크롤·고정 푸터용).
+import {
+  BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
+  BottomSheetModal,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
+import { BackHandler, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, radius, scrim, spacing } from '@shared/theme';
 
 interface Props {
-  visible: boolean;
-  onClose: () => void;
+  /** useBottomSheet().ref 주입 → present/dismiss 로 제어 */
+  ref?: React.Ref<BottomSheetModal>;
+  onClose?: () => void;
   children: ReactNode;
-  /** 시트 최대 높이 비율(0~1). 기본 0.85 */
+  /** 시트 최대(또는 고정) 높이 비율(0~1). 기본 0.85 */
   maxHeightRatio?: number;
+  /** true면 콘텐츠 높이에 맞춰 시트 크기 결정. false(기본)면 maxHeightRatio 고정 높이. */
+  dynamic?: boolean;
 }
 
-export default function BottomSheet({ visible, onClose, children, maxHeightRatio = 0.85 }: Props) {
+export default function BottomSheet({
+  ref,
+  onClose,
+  children,
+  maxHeightRatio = 0.85,
+  dynamic = false,
+}: Props) {
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
+
+  // 내부 ref(back 핸들러에서 dismiss용) + 외부 주입 ref 동시 연결.
+  const innerRef = useRef<BottomSheetModal>(null);
+  const setRefs = useCallback(
+    (node: BottomSheetModal | null) => {
+      innerRef.current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) (ref as React.MutableRefObject<BottomSheetModal | null>).current = node;
+    },
+    [ref],
+  );
+
+  // 실제 열림 상태(백드롭 탭 닫힘 포함) 추적. index>=0 이면 열림.
+  const openRef = useRef(false);
+  const handleChange = useCallback((index: number) => {
+    openRef.current = index >= 0;
+  }, []);
+
+  // Android 하드웨어 back: 시트 열려 있으면 시트만 닫고 네비게이션 차단.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (openRef.current) {
+        innerRef.current?.dismiss();
+        return true;
+      }
+      return false;
+    });
+    return () => sub.remove();
+  }, []);
+
+  // 고정 모드: 단일 스냅 포인트. 동적 모드: 콘텐츠 측정 + 최대 높이 캡.
+  const snapPoints = useMemo(() => [`${Math.round(maxHeightRatio * 100)}%`], [maxHeightRatio]);
+  const maxDynamicContentSize = useMemo(
+    () => Math.round(height * maxHeightRatio),
+    [height, maxHeightRatio],
+  );
+
+  // 스크림 + 바깥 탭 닫기.
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        pressBehavior='close'
+        opacity={1}
+        style={[props.style, styles.backdrop]}
+      />
+    ),
+    [],
+  );
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType='none'
-      statusBarTranslucent
-      onRequestClose={onClose}
+    <BottomSheetModal
+      ref={setRefs}
+      onChange={handleChange}
+      onDismiss={onClose}
+      enableDynamicSizing={dynamic}
+      snapPoints={dynamic ? undefined : snapPoints}
+      maxDynamicContentSize={dynamic ? maxDynamicContentSize : undefined}
+      backdropComponent={renderBackdrop}
+      backgroundStyle={styles.sheet}
+      handleIndicatorStyle={styles.handle}
+      handleStyle={styles.handleArea}
+      keyboardBehavior='interactive'
+      keyboardBlurBehavior='restore'
+      android_keyboardInputMode='adjustResize'
     >
-      <View style={styles.root}>
-        <Animated.View
-          entering={FadeIn.duration(180)}
-          exiting={FadeOut.duration(150)}
-          style={styles.backdropWrap}
-        >
-          <Pressable style={styles.backdrop} onPress={onClose} />
-        </Animated.View>
-
-        <Animated.View
-          entering={SlideInDown.duration(260)}
-          style={[
-            styles.sheet,
-            {
-              maxHeight: `${Math.round(maxHeightRatio * 100)}%`,
-              paddingBottom: insets.bottom + spacing.lg,
-            },
-          ]}
-        >
-          <View style={styles.handle} />
+      {dynamic ? (
+        // 동적: 콘텐츠 높이 측정 필요 → BottomSheetView.
+        <BottomSheetView style={[styles.contentDynamic, { paddingBottom: insets.bottom + spacing.lg }]}>
           {children}
-        </Animated.View>
-      </View>
-    </Modal>
+        </BottomSheetView>
+      ) : (
+        // 고정: 일반 View(flex:1). BottomSheetView로 감싸면 내부 BottomSheetScrollView 스크롤이 안 됨.
+        <View style={[styles.contentFixed, { paddingBottom: insets.bottom + spacing.lg }]}>
+          {children}
+        </View>
+      )}
+    </BottomSheetModal>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, justifyContent: 'flex-end' },
-  backdropWrap: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  backdrop: { flex: 1, backgroundColor: scrim },
+  backdrop: { backgroundColor: scrim },
   sheet: {
     backgroundColor: colors.canvas,
     borderTopLeftRadius: radius.comfortable,
     borderTopRightRadius: radius.comfortable,
-    paddingTop: spacing.sm,
-    // sheet 그림자(elevation.sheet 토큰과 동일 의도)
-    shadowColor: colors.sheetShadow,
-    shadowOpacity: 1,
-    shadowRadius: 32,
-    shadowOffset: { width: 0, height: -8 },
-    elevation: 8,
   },
+  handleArea: { paddingTop: spacing.sm, paddingBottom: spacing.sm },
   handle: {
-    alignSelf: 'center',
     width: 36,
     height: 4,
     borderRadius: radius.circle,
     backgroundColor: colors.surface2,
-    marginBottom: spacing.sm,
   },
+  contentFixed: { flex: 1, paddingTop: spacing.sm },
+  contentDynamic: { paddingTop: spacing.sm },
 });

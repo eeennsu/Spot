@@ -1,7 +1,15 @@
 // 프로젝트 목록 + 전역 검색. 행 탭 → 상세. 검색 결과 탭 → 해당 프로젝트 도형으로 이동.
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  FlatList,
+  KeyboardAvoidingView,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import SearchBar from '@shared/components/customs/SearchBar';
@@ -34,7 +42,7 @@ export default function ProjectsScreen() {
   };
 
   return (
-    <View style={styles.root}>
+    <KeyboardAvoidingView style={styles.root} behavior='height'>
       <View style={styles.searchWrap}>
         <SearchBar
           value={query}
@@ -92,7 +100,7 @@ export default function ProjectsScreen() {
           </View>
         </>
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

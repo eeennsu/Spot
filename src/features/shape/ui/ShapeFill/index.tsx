@@ -39,7 +39,7 @@ export default function ShapeFill({ type, color, label }: Props) {
       ]}
     >
       {label ? (
-        <Text style={[typography.metadata, { color: pickOnFill(color) }]} numberOfLines={2}>
+        <Text style={[typography.shapeLabel, { color: pickOnFill(color) }]} numberOfLines={1}>
           {label}
         </Text>
       ) : null}
@@ -50,7 +50,7 @@ export default function ShapeFill({ type, color, label }: Props) {
 function Centered({ label, color }: { label: string; color: string }) {
   return (
     <View style={[StyleSheet.absoluteFill, styles.center]} pointerEvents='none'>
-      <Text style={[typography.metadata, { color: pickOnFill(color) }]} numberOfLines={2}>
+      <Text style={[typography.shapeLabel, { color: pickOnFill(color) }]} numberOfLines={2}>
         {label}
       </Text>
     </View>

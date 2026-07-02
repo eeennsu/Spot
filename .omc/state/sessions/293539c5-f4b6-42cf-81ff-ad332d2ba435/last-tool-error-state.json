@@ -1,0 +1,7 @@
+{
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"/Users/wonderround/Documents/Git/woka_app/src/shared/components/commons/BottomSheetModal/WithIndicator/index.tsx\"}",
+  "error": "File does not exist. Note: your current working directory is /Users/wonderround/Documents/Git/porfolio/spot.",
+  "timestamp": "2026-06-28T06:49:31.116Z",
+  "retry_count": 1
+}

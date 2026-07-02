@@ -1,7 +1,7 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1782571433235,
-  "projectRoot": "/Users/wonderround/Documents/Git/porfolio/my-spot",
+  "lastScanned": 1782976488531,
+  "projectRoot": "/Users/wonderround/Documents/Git/porfolio/spot",
   "techStack": {
     "languages": [
       {
@@ -28,26 +28,30 @@
         "category": "frontend"
       }
     ],
-    "packageManager": "npm",
+    "packageManager": "pnpm",
     "runtime": null
   },
   "build": {
     "buildCommand": null,
     "testCommand": null,
-    "lintCommand": null,
-    "devCommand": "npm run start",
+    "lintCommand": "pnpm lint",
+    "devCommand": "pnpm start",
     "scripts": {
       "start": "expo start --dev-client",
       "android": "expo run:android",
       "prebuild": "expo prebuild -p android --clean",
-      "typecheck": "tsc --noEmit"
+      "typecheck": "tsc --noEmit",
+      "lint": "eslint .",
+      "lint:fix": "eslint . --fix",
+      "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+      "format:check": "prettier --check \"src/**/*.{ts,tsx}\""
     }
   },
   "conventions": {
     "namingStyle": null,
     "importStyle": null,
     "testPattern": null,
-    "fileOrganization": null
+    "fileOrganization": "feature-based"
   },
   "structure": {
     "isMonorepo": false,
@@ -57,7 +61,10 @@
       "docs",
       "src"
     ],
-    "gitBranches": null
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
   },
   "customNotes": [],
   "directoryMap": {
@@ -65,7 +72,7 @@
       "path": "android",
       "purpose": null,
       "fileCount": 6,
-      "lastAccessed": 1782571433218,
+      "lastAccessed": 1782976488519,
       "keyFiles": [
         "build.gradle",
         "gradle.properties",
@@ -78,7 +85,7 @@
       "path": "assets",
       "purpose": "Static assets",
       "fileCount": 6,
-      "lastAccessed": 1782571433219,
+      "lastAccessed": 1782976488521,
       "keyFiles": [
         "android-icon-background.png",
         "android-icon-foreground.png",
@@ -90,25 +97,38 @@
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 2,
-      "lastAccessed": 1782571433229,
+      "fileCount": 4,
+      "lastAccessed": 1782976488524,
       "keyFiles": [
         "FSD.md",
+        "PHASE_WORKFLOW.md",
+        "PRD.md",
         "UIUX.md"
+      ]
+    },
+    "ios": {
+      "path": "ios",
+      "purpose": null,
+      "fileCount": 6,
+      "lastAccessed": 1782976488525,
+      "keyFiles": [
+        "Podfile",
+        "Podfile.lock",
+        "Podfile.properties.json"
       ]
     },
     "src": {
       "path": "src",
       "purpose": "Source code",
       "fileCount": 0,
-      "lastAccessed": 1782571433230,
+      "lastAccessed": 1782976488526,
       "keyFiles": []
     },
     "android/app": {
       "path": "android/app",
       "purpose": "Application code",
       "fileCount": 3,
-      "lastAccessed": 1782571433230,
+      "lastAccessed": 1782976488526,
       "keyFiles": [
         "build.gradle",
         "debug.keystore",
@@ -119,53 +139,62 @@
       "path": "android/build",
       "purpose": "Build output",
       "fileCount": 0,
-      "lastAccessed": 1782571433231,
+      "lastAccessed": 1782976488526,
+      "keyFiles": []
+    },
+    "ios/build": {
+      "path": "ios/build",
+      "purpose": "Build output",
+      "fileCount": 0,
+      "lastAccessed": 1782976488527,
       "keyFiles": []
     },
     "src/app": {
       "path": "src/app",
       "purpose": "Application code",
       "fileCount": 2,
-      "lastAccessed": 1782571433231,
+      "lastAccessed": 1782976488528,
       "keyFiles": [
         "_layout.tsx",
         "index.tsx"
-      ]
-    },
-    "src/data": {
-      "path": "src/data",
-      "purpose": "Data files",
-      "fileCount": 3,
-      "lastAccessed": 1782571433232,
-      "keyFiles": [
-        "db.ts",
-        "index.ts",
-        "schema.ts"
-      ]
-    },
-    "src/types": {
-      "path": "src/types",
-      "purpose": "Type definitions",
-      "fileCount": 4,
-      "lastAccessed": 1782571433232,
-      "keyFiles": [
-        "index.ts",
-        "material.ts",
-        "project.ts"
       ]
     }
   },
   "hotPaths": [
     {
       "path": "src/app/project/[id].tsx",
-      "accessCount": 13,
-      "lastAccessed": 1782578364933,
+      "accessCount": 20,
+      "lastAccessed": 1782633776103,
+      "type": "file"
+    },
+    {
+      "path": "src/app/_layout.tsx",
+      "accessCount": 19,
+      "lastAccessed": 1782628629526,
       "type": "file"
     },
     {
       "path": "src/app/index.tsx",
+      "accessCount": 14,
+      "lastAccessed": 1782629429413,
+      "type": "file"
+    },
+    {
+      "path": "src/entities/shape/consts.ts",
+      "accessCount": 11,
+      "lastAccessed": 1782633973441,
+      "type": "file"
+    },
+    {
+      "path": "src/shared/theme/colors.ts",
       "accessCount": 10,
-      "lastAccessed": 1782577276637,
+      "lastAccessed": 1782631713843,
+      "type": "file"
+    },
+    {
+      "path": "src/shared/db/schema.ts",
+      "accessCount": 10,
+      "lastAccessed": 1782633992209,
       "type": "file"
     },
     {
@@ -187,6 +216,36 @@
       "type": "file"
     },
     {
+      "path": "app.json",
+      "accessCount": 8,
+      "lastAccessed": 1782610205536,
+      "type": "file"
+    },
+    {
+      "path": "src/shared/theme/typography.ts",
+      "accessCount": 8,
+      "lastAccessed": 1782631721811,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 7,
+      "lastAccessed": 1782610213638,
+      "type": "file"
+    },
+    {
+      "path": "src/entities/material/types.ts",
+      "accessCount": 6,
+      "lastAccessed": 1782631768163,
+      "type": "file"
+    },
+    {
+      "path": "src/shared/db/index.ts",
+      "accessCount": 6,
+      "lastAccessed": 1782631976363,
+      "type": "file"
+    },
+    {
       "path": "docs/PRD.md",
       "accessCount": 5,
       "lastAccessed": 1782575367612,
@@ -199,27 +258,21 @@
       "type": "file"
     },
     {
-      "path": "src/shared/theme/typography.ts",
+      "path": "src/entities/material/consts.ts",
       "accessCount": 5,
-      "lastAccessed": 1782575390627,
+      "lastAccessed": 1782633128879,
       "type": "file"
     },
     {
-      "path": "src/app/_layout.tsx",
-      "accessCount": 5,
-      "lastAccessed": 1782576433071,
+      "path": "tsconfig.json",
+      "accessCount": 4,
+      "lastAccessed": 1782606873361,
       "type": "file"
     },
     {
-      "path": "app.json",
-      "accessCount": 5,
-      "lastAccessed": 1782576694246,
-      "type": "file"
-    },
-    {
-      "path": "src/shared/theme/colors.ts",
-      "accessCount": 5,
-      "lastAccessed": 1782577668095,
+      "path": "src/entities/project/types.ts",
+      "accessCount": 4,
+      "lastAccessed": 1782634001772,
       "type": "file"
     },
     {
@@ -235,27 +288,33 @@
       "type": "file"
     },
     {
-      "path": "src/shared/db/schema.ts",
-      "accessCount": 3,
-      "lastAccessed": 1782575395818,
-      "type": "file"
-    },
-    {
       "path": "src/entities/shape/types.ts",
       "accessCount": 3,
       "lastAccessed": 1782575397265,
       "type": "file"
     },
     {
-      "path": "tsconfig.json",
+      "path": "src/shared/theme/spacing.ts",
       "accessCount": 3,
-      "lastAccessed": 1782575416851,
+      "lastAccessed": 1782610824792,
       "type": "file"
     },
     {
-      "path": "src/entities/shape/consts.ts",
+      "path": "src/shared/theme/radius.ts",
       "accessCount": 3,
-      "lastAccessed": 1782576070663,
+      "lastAccessed": 1782610825340,
+      "type": "file"
+    },
+    {
+      "path": "src/entities/project/consts.ts",
+      "accessCount": 3,
+      "lastAccessed": 1782633893555,
+      "type": "file"
+    },
+    {
+      "path": "src/features/project/libs/map_row.ts",
+      "accessCount": 3,
+      "lastAccessed": 1782634007531,
       "type": "file"
     },
     {
@@ -268,12 +327,6 @@
       "path": ".npmrc",
       "accessCount": 2,
       "lastAccessed": 1782573810257,
-      "type": "file"
-    },
-    {
-      "path": "package.json",
-      "accessCount": 2,
-      "lastAccessed": 1782573811318,
       "type": "file"
     },
     {
@@ -403,57 +456,9 @@
       "type": "file"
     },
     {
-      "path": "src/shared/theme/spacing.ts",
-      "accessCount": 2,
-      "lastAccessed": 1782575389070,
-      "type": "file"
-    },
-    {
-      "path": "src/shared/theme/radius.ts",
-      "accessCount": 2,
-      "lastAccessed": 1782575390942,
-      "type": "file"
-    },
-    {
-      "path": "src/shared/db/index.ts",
-      "accessCount": 2,
-      "lastAccessed": 1782575396854,
-      "type": "file"
-    },
-    {
-      "path": "src/entities/material/types.ts",
-      "accessCount": 2,
-      "lastAccessed": 1782575398656,
-      "type": "file"
-    },
-    {
-      "path": "src/entities/material/consts.ts",
-      "accessCount": 2,
-      "lastAccessed": 1782575399131,
-      "type": "file"
-    },
-    {
-      "path": "src/entities/project/types.ts",
-      "accessCount": 2,
-      "lastAccessed": 1782575399618,
-      "type": "file"
-    },
-    {
-      "path": "src/entities/project/consts.ts",
-      "accessCount": 2,
-      "lastAccessed": 1782575399908,
-      "type": "file"
-    },
-    {
       "path": "src/shared/utils/util_id.ts",
       "accessCount": 2,
       "lastAccessed": 1782575416413,
-      "type": "file"
-    },
-    {
-      "path": "src/features/project/libs/map_row.ts",
-      "accessCount": 1,
-      "lastAccessed": 1782574162017,
       "type": "file"
     }
   ],

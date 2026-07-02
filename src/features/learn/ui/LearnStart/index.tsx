@@ -1,4 +1,6 @@
 // 학습 시작 선택 시트 — 위치 맞히기 / 이름 맞히기.
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { MapPin, Tag } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import BottomSheet from '@shared/components/customs/BottomSheet';
@@ -7,17 +9,18 @@ import { colors, radius, spacing, typography } from '@shared/theme';
 import type { ILearnType } from '../../types';
 
 interface Props {
-  visible: boolean;
+  /** useBottomSheet().ref 주입 → present/dismiss 로 제어 */
+  sheetRef: React.Ref<BottomSheetModal>;
   /** 퀴즈 가능한 자재 수(0이면 안내) */
   count: number;
-  onClose: () => void;
+  onClose?: () => void;
   onPick: (type: ILearnType) => void;
 }
 
-export default function LearnStart({ visible, count, onClose, onPick }: Props) {
+export default function LearnStart({ sheetRef, count, onClose, onPick }: Props) {
   const disabled = count === 0;
   return (
-    <BottomSheet visible={visible} onClose={onClose} maxHeightRatio={0.5}>
+    <BottomSheet ref={sheetRef} onClose={onClose} maxHeightRatio={0.5} dynamic>
       <View style={styles.root}>
         <Text style={typography.heading}>학습 모드</Text>
         {disabled ? (
@@ -30,11 +33,17 @@ export default function LearnStart({ visible, count, onClose, onPick }: Props) {
               자재 이름 라벨을 가리고 퀴즈를 냅니다.
             </Text>
             <Pressable onPress={() => onPick('position')} style={styles.card}>
-              <Text style={typography.taskTitle}>📍 위치 맞히기</Text>
+              <View style={styles.cardTitle}>
+                <MapPin size={18} color={colors.textPrimary} strokeWidth={2} />
+                <Text style={typography.taskTitle}>위치 맞히기</Text>
+              </View>
               <Text style={typography.metadata}>자재 이름을 보고 평면도에서 도형을 찾습니다.</Text>
             </Pressable>
             <Pressable onPress={() => onPick('name')} style={styles.card}>
-              <Text style={typography.taskTitle}>🏷️ 이름 맞히기</Text>
+              <View style={styles.cardTitle}>
+                <Tag size={18} color={colors.textPrimary} strokeWidth={2} />
+                <Text style={typography.taskTitle}>이름 맞히기</Text>
+              </View>
               <Text style={typography.metadata}>하이라이트된 도형의 자재 이름을 고릅니다.</Text>
             </Pressable>
           </>
@@ -53,4 +62,5 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.xs,
   },
+  cardTitle: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
 });

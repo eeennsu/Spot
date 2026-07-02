@@ -1,20 +1,23 @@
 {
   "expo": {
-    "name": "my-spot",
-    "slug": "my-spot",
+    "name": "spot",
+    "slug": "spot",
     "version": "1.0.0",
     "orientation": "portrait",
-    "scheme": "myspot",
+    "scheme": "spot",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "android": {
-      "package": "com.myspot.app",
+      "package": "com.spot.app",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -25,6 +28,9 @@
     ],
     "experiments": {
       "reactCompiler": true
+    },
+    "ios": {
+      "bundleIdentifier": "com.spot.app"
     }
   }
 }
