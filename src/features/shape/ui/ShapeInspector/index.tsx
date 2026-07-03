@@ -1,10 +1,12 @@
-// 선택 도형 인스펙터 — Edit 하단 패널. 색/별칭/라벨(기타)/자재 층 관리/삭제.
+// 선택 도형 인스펙터 — Edit 하단 패널. 색/이름(검색용 alias)/라벨(기타)/자재 층 관리/삭제.
 import { ChevronRight } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { colors, palette, radius, spacing, typography } from '@shared/theme';
+import { colors, layout, palette, radius, spacing, typography } from '@shared/theme';
 import { utilHaptic } from '@shared/utils/util_haptics';
 
+import { shapeCatalogOf } from '@entities/shape/consts';
 import type { IShape } from '@entities/shape/types';
 
 interface Props {
@@ -24,9 +26,19 @@ export default function ShapeInspector({
   onManageMaterials,
 }: Props) {
   const isSpace = shape.category === 'space';
-  const labelEditable = shape.type === 'etc';
   // 자재: 콘텐츠 색 후보. 공간: 중립(기본)도 고를 수 있게 앞에 추가.
   const colorOptions = isSpace ? [palette.spaceFill, ...palette.shapeFills] : palette.shapeFills;
+
+  // 이름 — 공간 도형은 label(중앙 표시·기본 문/사무실/기타), 자재 도형은 alias(검색용)로 통일(#8).
+  const spaceDefault = isSpace ? (shapeCatalogOf(shape.type).defaultLabel ?? '공간') : '';
+  // onEndEditing(blur) 만 쓰면 '완료'로 닫을 때 인스펙터가 blur 커밋보다 먼저 언마운트돼
+  // 입력이 저장 안 되는 문제가 있어, 매 입력마다 즉시 반영한다.
+  const [nameText, setNameText] = useState((isSpace ? shape.label : shape.alias) ?? '');
+  // 다른 도형을 선택할 때만(shape.id 변경) 입력값을 그 도형 값으로 재동기화.
+  useEffect(() => {
+    setNameText((isSpace ? shape.label : shape.alias) ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shape.id]);
 
   return (
     <View style={styles.panel}>
@@ -64,35 +76,23 @@ export default function ShapeInspector({
         </View>
       </View>
 
-      {/* 별칭 (검색 대상) */}
+      {/* 이름 — 공간=중앙 표시 이름, 자재=검색용 이름(통일) */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>별칭</Text>
+        <Text style={styles.sectionLabel}>이름</Text>
         <TextInput
           style={styles.input}
-          defaultValue={shape.alias ?? ''}
-          onEndEditing={e => onUpdate({ alias: e.nativeEvent.text.trim() || undefined })}
-          placeholder='예: A, B 구역'
+          value={nameText}
+          onChangeText={t => {
+            setNameText(t);
+            if (isSpace) onUpdate({ label: t.trim() || spaceDefault });
+            else onUpdate({ alias: t.trim() || undefined });
+          }}
+          placeholder={isSpace ? '예: 정문, 창고 사무실' : '예: A랙, 입구 선반 (검색용)'}
           placeholderTextColor={colors.textTertiary}
           selectionColor={colors.blue}
           returnKeyType='done'
         />
       </View>
-
-      {/* 라벨 (기타 공간만 편집) */}
-      {labelEditable && (
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>라벨</Text>
-          <TextInput
-            style={styles.input}
-            defaultValue={shape.label ?? ''}
-            onEndEditing={e => onUpdate({ label: e.nativeEvent.text.trim() || '기타' })}
-            placeholder='기타'
-            placeholderTextColor={colors.textTertiary}
-            selectionColor={colors.blue}
-            returnKeyType='done'
-          />
-        </View>
-      )}
 
       {/* 자재 층 관리 + 삭제 */}
       <View style={styles.actionRow}>
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  closeBtn: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.xs },
+  closeBtn: { minHeight: spacing.xl4, justifyContent: 'center', paddingHorizontal: spacing.xs },
   section: { gap: spacing.sm },
   sectionLabel: { ...typography.metadata, color: colors.textSecondary },
   swatchRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   swatchPressed: { transform: [{ scale: 0.9 }] },
   pressedDim: { opacity: 0.6 },
   input: {
-    height: 44,
+    height: spacing.xl4,
     paddingHorizontal: spacing.lg,
     borderRadius: radius.standard,
     borderWidth: 1,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   manageBtn: {
     flex: 3,
-    minHeight: 48,
+    minHeight: layout.buttonHeight,
     borderRadius: radius.standard,
     flexDirection: 'row',
     alignItems: 'center',
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   actionRow: { flexDirection: 'row', gap: spacing.sm, paddingBottom: spacing.sm },
   actionBtn: {
     flex: 1,
-    minHeight: 48,
+    minHeight: layout.buttonHeight,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

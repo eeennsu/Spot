@@ -7,6 +7,7 @@ import Animated, {
   FadeIn,
   FadeOut,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withRepeat,
   withSequence,
@@ -15,7 +16,16 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { colors, motion, palette, pickOnFill, radius, spacing, typography } from '@shared/theme';
+import {
+  colors,
+  elevation,
+  motion,
+  palette,
+  pickOnFill,
+  radius,
+  spacing,
+  typography,
+} from '@shared/theme';
 import { utilHaptic } from '@shared/utils/util_haptics';
 
 import {
@@ -24,7 +34,6 @@ import {
   SHAPE_ROTATE_SNAP_THRESHOLD,
   SHAPE_ROTATE_STEP,
   isAspectLocked,
-  shapeLabelFontSize,
 } from '@entities/shape/consts';
 import type { IShape } from '@entities/shape/types';
 
@@ -111,7 +120,11 @@ export default function ShapeView({
 
   const locked = isAspectLocked(shape.type);
   // 도형 중앙 라벨/캡션 폰트 — 도형 크기에 비례(작으면 축소, 크면 확대).
-  const labelFontSize = shapeLabelFontSize(shape.width, shape.height);
+  // 리사이즈 중 라이브 스케일: w/h 공유값에서 폰트 크기 산출(shapeLabelFontSize 와 동일 클램프).
+  const liveFontSize = useDerivedValue(() => {
+    const base = Math.min(w.value, h.value) * 0.3;
+    return Math.round(Math.min(48, Math.max(16, base)));
+  });
   // 작은 도형일수록 핸들 hitSlop 을 줄여 본체(이동) 터치영역을 남긴다.
   const handleSlop = Math.max(
     8,
@@ -136,6 +149,12 @@ export default function ShapeView({
 
   const highlightStyle = useAnimatedStyle(() => ({ opacity: 0.45 + pulse.value * 0.55 }));
 
+  // 캡션 폰트를 리사이즈 제스처 동안 부드럽게 스케일(commit 시 튀지 않게).
+  const captionFontStyle = useAnimatedStyle(() => ({
+    fontSize: liveFontSize.value,
+    lineHeight: Math.round(liveFontSize.value * 1.2),
+  }));
+
   // ── 탭: 선택(Edit) / 뷰어 콜백 ──
   const tap = Gesture.Tap().onEnd(() => {
     if (editable) {
@@ -149,9 +168,8 @@ export default function ShapeView({
   // ── 드래그 이동(Edit) ──
   const drag = Gesture.Pan()
     .enabled(editable)
-    .onBegin(() => {
-      scheduleOnRN(onSelect, shape.id);
-    })
+    // 이동만 하려는데 수정 패널이 뜨는 불편 제거(#9): 드래그는 선택하지 않는다.
+    // 선택(인스펙터 열기)은 탭에서만. 드래그는 순수 이동.
     .onStart(() => {
       // 실제 드래그 시작 시 들어올림 + 픽업 햅틱.
       lift.value = withTiming(LIFT_SCALE, { duration: 120 });
@@ -220,6 +238,10 @@ export default function ShapeView({
   if (canvasPanRef) rotate.blocksExternalGesture(canvasPanRef as never);
 
   const showHandles = editable && selected;
+  // 기울기(회전) 핸들은 ㄱ자(L) 도형만 노출(#1).
+  const canRotate = shape.type === 'L';
+  // 도형 이름(중앙 표시) — 공간=label, 자재=alias(없으면 대표 자재명 캡션)(#4/#8).
+  const centerName = shape.category === 'space' ? shape.label : shape.alias || caption?.name;
 
   return (
     <Animated.View
@@ -229,46 +251,27 @@ export default function ShapeView({
     >
       <GestureDetector gesture={bodyGesture}>
         <Animated.View style={StyleSheet.absoluteFill}>
-          <ShapeFill
-            type={shape.type}
-            color={shape.color}
-            label={shape.label}
-            fontSize={labelFontSize}
-          />
+          <ShapeFill type={shape.type} color={shape.color} />
         </Animated.View>
       </GestureDetector>
 
-      {/* 자재명 캡션 — 도형 회전과 무관하게 항상 수평 (Viewer·Edit 공통) */}
-      {caption ? (
+      {/* 도형 이름(중앙) — 회전과 무관하게 항상 수평 (Viewer·Edit 공통) */}
+      {centerName ? (
         <Animated.View style={[styles.caption, counterRotateStyle]} pointerEvents='none'>
-          <Text
-            style={[
-              typography.metadata,
-              {
-                color: pickOnFill(shape.color),
-                fontSize: labelFontSize,
-                lineHeight: Math.round(labelFontSize * 1.2),
-              },
-            ]}
+          <Animated.Text
+            style={[typography.metadata, { color: pickOnFill(shape.color) }, captionFontStyle]}
             numberOfLines={2}
           >
-            {caption.name}
-          </Text>
+            {centerName}
+          </Animated.Text>
         </Animated.View>
       ) : null}
 
-      {/* 추가 자재 개수 배지 — 도형 최우측 최상단 원형 */}
+      {/* 추가 자재 개수 배지 — 도형 우상단 원형(도형 위로 떠 보이게 크게·zIndex·그림자) */}
       {caption && caption.extra > 0 ? (
         <Animated.View style={[styles.countBadge, counterRotateStyle]} pointerEvents='none'>
           <Text style={styles.countText}>+{caption.extra}</Text>
         </Animated.View>
-      ) : null}
-
-      {/* 별칭 배지 */}
-      {shape.alias ? (
-        <View style={styles.aliasBadge} pointerEvents='none'>
-          <Text style={styles.aliasText}>{shape.alias}</Text>
-        </View>
       ) : null}
 
       {/* 선택 외곽선(정적) */}
@@ -282,9 +285,12 @@ export default function ShapeView({
       {/* 핸들 */}
       {showHandles ? (
         <>
-          <GestureDetector gesture={rotate}>
-            <View style={[styles.handle, styles.rotateHandle]} hitSlop={handleSlop} />
-          </GestureDetector>
+          {/* 기울기(회전) 핸들 — ㄱ자(L) 도형만. 나머지는 회전 불필요(#1). */}
+          {canRotate ? (
+            <GestureDetector gesture={rotate}>
+              <View style={[styles.handle, styles.rotateHandle]} hitSlop={handleSlop} />
+            </GestureDetector>
+          ) : null}
           <GestureDetector gesture={resize}>
             <View style={[styles.handle, styles.resizeHandle]} hitSlop={handleSlop} />
           </GestureDetector>
@@ -306,11 +312,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     top: 0,
-    shadowColor: colors.textPrimary,
-    shadowOpacity: 0.14,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    ...elevation.dragLift,
   },
   outline: {
     position: 'absolute',
@@ -342,39 +344,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.xs,
   },
-  aliasBadge: {
-    position: 'absolute',
-    top: -spacing.sm,
-    left: -spacing.sm,
-    minWidth: 20,
-    height: 20,
-    paddingHorizontal: spacing.xs,
-    borderRadius: radius.circle,
-    backgroundColor: colors.textPrimary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  aliasText: {
-    ...typography.metadata,
-    color: colors.canvas,
-    fontSize: typography.shapeLabel.fontSize,
-    lineHeight: 14,
-  },
   countBadge: {
     position: 'absolute',
     top: -spacing.sm,
     right: -spacing.sm,
-    minWidth: 24,
-    height: 24,
+    minWidth: 30,
+    height: 30,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.circle,
     backgroundColor: colors.canvas,
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: colors.textPrimary,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 20,
+    ...elevation.sheet,
   },
-  countText: { ...typography.metadata, color: colors.textPrimary, fontSize: 12, lineHeight: 15 },
+  countText: { ...typography.metadata, color: colors.textPrimary, fontSize: 14, lineHeight: 16 },
   handle: {
     position: 'absolute',
     width: HANDLE,

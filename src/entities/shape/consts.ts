@@ -52,32 +52,32 @@ export const SHAPE_CATALOG: readonly IShapeCatalogItem[] = [
     category: 'material',
     type: 'rect',
     labelKo: '직사각형',
-    defaultWidth: 180,
-    defaultHeight: 120,
+    defaultWidth: 252,
+    defaultHeight: 168,
     lockAspect: false,
   },
   {
     category: 'material',
     type: 'square',
     labelKo: '정사각형',
-    defaultWidth: 145,
-    defaultHeight: 145,
+    defaultWidth: 200,
+    defaultHeight: 200,
     lockAspect: true,
   },
   {
     category: 'material',
     type: 'L',
     labelKo: 'ㄴ자',
-    defaultWidth: 170,
-    defaultHeight: 170,
+    defaultWidth: 238,
+    defaultHeight: 238,
     lockAspect: false,
   },
   {
     category: 'material',
     type: 'circle',
     labelKo: '원',
-    defaultWidth: 145,
-    defaultHeight: 145,
+    defaultWidth: 200,
+    defaultHeight: 200,
     lockAspect: true,
   },
   // ── 공간 도형 (자재 없음, 라벨만) ──
@@ -85,8 +85,8 @@ export const SHAPE_CATALOG: readonly IShapeCatalogItem[] = [
     category: 'space',
     type: 'door',
     labelKo: '문',
-    defaultWidth: 118,
-    defaultHeight: 66,
+    defaultWidth: 165,
+    defaultHeight: 92,
     lockAspect: false,
     defaultLabel: '문',
   },
@@ -94,8 +94,8 @@ export const SHAPE_CATALOG: readonly IShapeCatalogItem[] = [
     category: 'space',
     type: 'office',
     labelKo: '사무실',
-    defaultWidth: 210,
-    defaultHeight: 135,
+    defaultWidth: 290,
+    defaultHeight: 186,
     lockAspect: false,
     defaultLabel: '사무실',
   },
@@ -103,8 +103,8 @@ export const SHAPE_CATALOG: readonly IShapeCatalogItem[] = [
     category: 'space',
     type: 'etc',
     labelKo: '기타',
-    defaultWidth: 170,
-    defaultHeight: 120,
+    defaultWidth: 238,
+    defaultHeight: 168,
     lockAspect: false,
     defaultLabel: '기타',
   },
@@ -120,10 +120,4 @@ export function shapeCatalogOf(type: IShapeType): IShapeCatalogItem {
 /** 1:1 고정 도형인가 */
 export function isAspectLocked(type: IShapeType): boolean {
   return shapeCatalogOf(type).lockAspect;
-}
-
-/** 도형 중앙 라벨/캡션 폰트 크기(dp) — 도형 짧은 변에 비례, 범위 제한. */
-export function shapeLabelFontSize(width: number, height: number): number {
-  const base = Math.min(width, height) * 0.26;
-  return Math.round(Math.min(36, Math.max(14, base)));
 }
