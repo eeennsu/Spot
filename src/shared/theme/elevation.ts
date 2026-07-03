@@ -59,6 +59,18 @@ export const elevation = {
     elevation: 8,
   } satisfies ViewStyle,
 
+  /**
+   * Drag lift — 도형을 드래그로 들어올릴 때의 옅은 그림자.
+   * 캔버스는 flat 이지만, 잡아 든 도형만 살짝 떠 보이게(직접적 조작 피드백).
+   */
+  dragLift: {
+    shadowColor: '#000',
+    shadowOpacity: 0.14,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  } satisfies ViewStyle,
+
   // ── 하위 호환 shim (구 Linear 이름) ──────────────────────────────
   /**
    * @deprecated → elevation.flat.

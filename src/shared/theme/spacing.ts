@@ -35,4 +35,6 @@ export const layout = {
   commandMenuMaxWidth: 560,
   /** 사이드바 슬라이드오버 폭 */
   sidebarWidth: 300,
+  /** 주요(채운) 버튼 높이 — 터치 타겟 44 보다 살짝 크게, 앱 전역 통일값 */
+  buttonHeight: 48,
 } as const;

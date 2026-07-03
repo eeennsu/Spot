@@ -11,7 +11,6 @@ export const palette = {
   shapeFills: [
     '#4F97FF', // blue
     '#34C759', // green
-    '#FF9F0A', // orange
     '#FF375F', // pink-red
     '#AF52DE', // purple
     '#5AC8FA', // sky
