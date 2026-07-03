@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd /Users/wonderround/Documents/Git/porfolio/spot\\necho \\\"=== typedRoutes? ===\\\"; grep -rn \\\"typedRoutes\\\" app.json app.config.* 2>/dev/null\\necho \\\"=== tsc ===\\\"; pnpm exec tsc --noEmit 2...",
+  "error": "Exit code 1\n=== typedRoutes? ===\n(eval):2: no matches found: app.config.*",
+  "timestamp": "2026-07-03T06:06:21.541Z",
+  "retry_count": 1
+}

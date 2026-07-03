@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "entries": {
+    "445ed27a3872b681d98190bae61ccb84954e1bc4e140df5370be958dee776b3a": {
+      "last_emitted_at_ms": 1783058620728,
+      "message": "Verify changes work after editing. Test functionality before marking complete."
+    },
+    "79a93d4a2f8f50b95f852280616242fee1855dc99a3c75211917f55e72e95fae": {
+      "last_emitted_at_ms": 1783058500101,
+      "message": "Use parallel execution for independent tasks. Use run_in_background for long operations (npm install, builds, tests)."
+    },
+    "466399dafa2d20f60587180bad0a07358eb7f2bce724df0ff682f038ad33f5ad": {
+      "last_emitted_at_ms": 1783058431733,
+      "message": "Read multiple files in parallel when possible for faster analysis."
+    },
+    "34c5739189782328724543b05b1b9388fe02ff4197e0d1a88958f16493761078": {
+      "last_emitted_at_ms": 1783055622572,
+      "message": "Spawning agent: oh-my-claudecode:code-reviewer (opus) [BACKGROUND] | Task: Review full working diff"
+    },
+    "dd340b546783655ac11420cf9106f40ca8f07a12173936987f277128f47954a1": {
+      "last_emitted_at_ms": 1783055115289,
+      "message": "Spawning agent: oh-my-claudecode:executor (inherit) [BACKGROUND] | Task: Impl #7 pdf/search/learn polish"
+    },
+    "9e5761dd3f1b5364645253d9c785e21f43c3514907627b8ba13af7dd0a41b617": {
+      "last_emitted_at_ms": 1783055104523,
+      "message": "Spawning agent: oh-my-claudecode:executor (inherit) [BACKGROUND] | Task: Impl #4 example seed data"
+    },
+    "ea9beef9533df0d0939ecfd1c98e459101dc2dbf3af1f669e2d3f2ad9da637a5": {
+      "last_emitted_at_ms": 1783055093299,
+      "message": "Spawning agent: oh-my-claudecode:executor (inherit) [BACKGROUND] | Task: Impl #7 canvas tokens + empty"
+    },
+    "ed5c5f89f9f9953666932a28970a943905cd3c8954de944901ee4f3dffb88af1": {
+      "last_emitted_at_ms": 1783055083816,
+      "message": "Spawning agent: oh-my-claudecode:executor (inherit) [BACKGROUND] | Task: Impl #5 material divider + input UX"
+    },
+    "71b83d75b0d1fb5303948bc08b6a10ceaba8d1e8a8d3da552e309195ae69a35b": {
+      "last_emitted_at_ms": 1783055070252,
+      "message": "Spawning agent: oh-my-claudecode:executor (inherit) [BACKGROUND] | Task: Impl #2 project list polish"
+    },
+    "cd5e5117bc70e520e4c3b43a702e94572413fc9b9b3506ed39110538e5294460": {
+      "last_emitted_at_ms": 1783055059485,
+      "message": "Spawning agent: oh-my-claudecode:executor (opus) [BACKGROUND] | Task: Impl #1 size + #6 label scale"
+    }
+  },
+  "updated_at": "2026-07-03T06:03:40.728Z"
+}

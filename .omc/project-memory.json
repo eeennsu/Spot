@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1782976488531,
+  "lastScanned": 1783063720823,
   "projectRoot": "/Users/wonderround/Documents/Git/porfolio/spot",
   "techStack": {
     "languages": [
@@ -32,7 +32,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "python3 - <<'PY'\nBW,BH=2000,2600\nS=[\n (\"rect(A)\",100,140,760,320,False),\n (\"square(B)\",1540,140,360,360,True),\n (\"L\",100,580,760,760,False),\n (\"circle\",1500,940,400,400,True),\n (\"office\",0,2000,560,600,False),\n (\"etc\",1440,2000,560,600,False),\n (\"door\",850,2480,300,120,False),\n]\ndef rct(s): n,x,y,w,h,_=s; return (x,y,x+w,y+h)\nok=True\nfor n,x,y,w,h,lock in S:\n    if x<0 or y<0 or x+w>BW or y+h>BH: print(\"OOB\",n); ok=False\n    if lock and w!=h: print(\"ASPECT!\",n); ok=False\ndef ov(a,b):\n    ax1,ay1,ax2,ay2=rct(a); bx1,by1,bx2,by2=rct(b)\n    return max(0,min(ax2,bx2)-max(ax1,bx1))>0 and max(0,min(ay2,by2)-max(ay1,by1))>0\nfor i in range(len(S)):\n    for j in range(i+1,len(S)):\n        if ov(S[i],S[j]): print(\"OVERLAP\",S[i][0],S[j][0]); ok=False\nprint(\"center aisle:\",1500-860,\"| storage bottom L/circle:\",580+760,\"/\",940+400)\nprint(\"staging gap L->office:\",2000-1340,\" circle->etc:\",2000-1340)\nprint(\"door center x:\",850+150,\" office right:\",0+560,\" etc left:\",1440,\" -> midpoint:\",(560+1440)/2)\nprint(\"left flank:\",850-560,\" right flank:\",1440-1150)\nprint(\"ALL OK\" if ok else \"FAIL\")\nPY\necho \"=== tsc/lint ===\"\npnpm typecheck 2>&1 | tail -2; echo \"TSC=$?\"; pnpm lint 2>&1 | tail -2; echo \"LINT=$?\"",
+    "buildCommand": "cd /Users/wonderround/Documents/Git/porfolio/spot; pnpm typecheck > /tmp/tsc.log 2>&1; echo \"EXIT=$?\"; tail -30 /tmp/tsc.log",
     "testCommand": null,
     "lintCommand": "pnpm lint",
     "devCommand": "pnpm start",
@@ -72,7 +72,7 @@
       "path": "android",
       "purpose": null,
       "fileCount": 6,
-      "lastAccessed": 1782976488519,
+      "lastAccessed": 1783063720808,
       "keyFiles": [
         "build.gradle",
         "gradle.properties",
@@ -85,7 +85,7 @@
       "path": "assets",
       "purpose": "Static assets",
       "fileCount": 6,
-      "lastAccessed": 1782976488521,
+      "lastAccessed": 1783063720808,
       "keyFiles": [
         "android-icon-background.png",
         "android-icon-foreground.png",
@@ -97,20 +97,21 @@
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 4,
-      "lastAccessed": 1782976488524,
+      "fileCount": 5,
+      "lastAccessed": 1783063720815,
       "keyFiles": [
         "FSD.md",
         "PHASE_WORKFLOW.md",
         "PRD.md",
-        "UIUX.md"
+        "UIUX.md",
+        "feedbacks.md"
       ]
     },
     "ios": {
       "path": "ios",
       "purpose": null,
       "fileCount": 6,
-      "lastAccessed": 1782976488525,
+      "lastAccessed": 1783063720817,
       "keyFiles": [
         "Podfile",
         "Podfile.lock",
@@ -121,14 +122,14 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 0,
-      "lastAccessed": 1782976488526,
+      "lastAccessed": 1783063720817,
       "keyFiles": []
     },
     "android/app": {
       "path": "android/app",
       "purpose": "Application code",
       "fileCount": 3,
-      "lastAccessed": 1782976488526,
+      "lastAccessed": 1783063720817,
       "keyFiles": [
         "build.gradle",
         "debug.keystore",
@@ -139,21 +140,21 @@
       "path": "android/build",
       "purpose": "Build output",
       "fileCount": 0,
-      "lastAccessed": 1782976488526,
+      "lastAccessed": 1783063720818,
       "keyFiles": []
     },
     "ios/build": {
       "path": "ios/build",
       "purpose": "Build output",
       "fileCount": 0,
-      "lastAccessed": 1782976488527,
+      "lastAccessed": 1783063720819,
       "keyFiles": []
     },
     "src/app": {
       "path": "src/app",
       "purpose": "Application code",
       "fileCount": 2,
-      "lastAccessed": 1782976488528,
+      "lastAccessed": 1783063720819,
       "keyFiles": [
         "_layout.tsx",
         "index.tsx"
@@ -163,44 +164,68 @@
   "hotPaths": [
     {
       "path": "src/app/index.tsx",
-      "accessCount": 52,
-      "lastAccessed": 1783045279977,
-      "type": "file"
-    },
-    {
-      "path": "src/app/project/[id].tsx",
-      "accessCount": 33,
-      "lastAccessed": 1783045235892,
+      "accessCount": 83,
+      "lastAccessed": 1783063764282,
       "type": "file"
     },
     {
       "path": "src/entities/shape/consts.ts",
-      "accessCount": 28,
-      "lastAccessed": 1783049139840,
+      "accessCount": 42,
+      "lastAccessed": 1783063070922,
+      "type": "file"
+    },
+    {
+      "path": "src/app/project/[id].tsx",
+      "accessCount": 41,
+      "lastAccessed": 1783065895106,
       "type": "file"
     },
     {
       "path": "src/app/_layout.tsx",
-      "accessCount": 22,
-      "lastAccessed": 1783045793416,
+      "accessCount": 25,
+      "lastAccessed": 1783063275176,
       "type": "file"
     },
     {
       "path": "src/shared/theme/typography.ts",
-      "accessCount": 17,
-      "lastAccessed": 1783045629343,
+      "accessCount": 24,
+      "lastAccessed": 1783055125367,
       "type": "file"
     },
     {
       "path": "src/shared/theme/colors.ts",
-      "accessCount": 15,
-      "lastAccessed": 1783045629646,
+      "accessCount": 22,
+      "lastAccessed": 1783065673487,
+      "type": "file"
+    },
+    {
+      "path": "src/shared/theme/spacing.ts",
+      "accessCount": 19,
+      "lastAccessed": 1783055126200,
       "type": "file"
     },
     {
       "path": "src/shared/db/schema.ts",
       "accessCount": 12,
       "lastAccessed": 1783045230305,
+      "type": "file"
+    },
+    {
+      "path": "src/shared/theme/radius.ts",
+      "accessCount": 11,
+      "lastAccessed": 1783055126476,
+      "type": "file"
+    },
+    {
+      "path": "src/entities/material/consts.ts",
+      "accessCount": 10,
+      "lastAccessed": 1783050247907,
+      "type": "file"
+    },
+    {
+      "path": "src/entities/material/types.ts",
+      "accessCount": 10,
+      "lastAccessed": 1783050248446,
       "type": "file"
     },
     {
@@ -213,24 +238,6 @@
       "path": "src/shared/db/index.ts",
       "accessCount": 9,
       "lastAccessed": 1783045230966,
-      "type": "file"
-    },
-    {
-      "path": "src/entities/material/types.ts",
-      "accessCount": 9,
-      "lastAccessed": 1783045236743,
-      "type": "file"
-    },
-    {
-      "path": "src/entities/material/consts.ts",
-      "accessCount": 9,
-      "lastAccessed": 1783045236967,
-      "type": "file"
-    },
-    {
-      "path": "src/shared/theme/spacing.ts",
-      "accessCount": 9,
-      "lastAccessed": 1783045628882,
       "type": "file"
     },
     {
@@ -264,9 +271,9 @@
       "type": "file"
     },
     {
-      "path": "src/shared/theme/radius.ts",
-      "accessCount": 6,
-      "lastAccessed": 1783045628148,
+      "path": "src/entities/shape/types.ts",
+      "accessCount": 7,
+      "lastAccessed": 1783063082495,
       "type": "file"
     },
     {
@@ -285,12 +292,6 @@
       "path": "src/entities/project/consts.ts",
       "accessCount": 5,
       "lastAccessed": 1783045235280,
-      "type": "file"
-    },
-    {
-      "path": "src/entities/shape/types.ts",
-      "accessCount": 5,
-      "lastAccessed": 1783045236213,
       "type": "file"
     },
     {
@@ -313,8 +314,8 @@
     },
     {
       "path": "docs/UIUX.md",
-      "accessCount": 3,
-      "lastAccessed": 1782575376892,
+      "accessCount": 4,
+      "lastAccessed": 1783050163953,
       "type": "file"
     },
     {
