@@ -155,6 +155,43 @@ export default function ShapeView({
     lineHeight: Math.round(liveFontSize.value * 1.2),
   }));
 
+  // ── 핸들 줌 역보정(S1) ──
+  // 도화지는 scale.value 로 확대/축소되어 렌더된다. 핸들은 보드 좌표 고정(32dp)이라
+  // 줌아웃(도화지 최대 4000dp, fit-scale 0.1 미만) 시 화면상 3~6px 로 쪼그라들어
+  // 리사이즈/회전을 손으로 잡을 수 없다(캔버스 최다 불만). → 1/scale 로 역보정해
+  // 화면상 크기를 ~32dp 로 유지한다. 핸들 View 자체가 커지므로 터치 타겟도 함께 커진다.
+  // 배율 클램프 [1, 12]:
+  //  · 하한 1 — 줌인(scale>1)에도 기본 32dp 밑으로 줄이지 않는다(effective factor = max(1, 1/scale)).
+  //  · 상한 12 — 극단 줌아웃에서 핸들이 도형을 통째로 덮지 않도록 확대 상한.
+  //    (상한에 걸리는 scale≈0.083 이하부턴 화면상 크기가 다시 줄지만 그런 극단 줌은 드묾.)
+  const handleScale = useDerivedValue(() => clamp(1 / scale.value, 1, 12));
+
+  // 리사이즈 핸들 — 중심을 도형 우하단 모서리에 고정(오프셋 = -size/2)한 채 역보정 확대.
+  const resizeHandleStyle = useAnimatedStyle(() => {
+    const f = handleScale.value;
+    const size = HANDLE * f;
+    return {
+      width: size,
+      height: size,
+      bottom: -size / 2,
+      right: -size / 2,
+      borderWidth: 2 * f, // 테두리도 함께 키워 흰 도화지 위에서 계속 보이게
+    };
+  });
+
+  // 회전 핸들 — 상단 회전점(기존 중심 y = -HANDLE/2 - 6)에 중심 고정, 수평 중앙 유지하며 확대.
+  const rotateHandleStyle = useAnimatedStyle(() => {
+    const f = handleScale.value;
+    const size = HANDLE * f;
+    return {
+      width: size,
+      height: size,
+      top: -HANDLE / 2 - 6 - size / 2,
+      marginLeft: -size / 2,
+      borderWidth: 2 * f,
+    };
+  });
+
   // ── 탭: 선택(Edit) / 뷰어 콜백 ──
   const tap = Gesture.Tap().onEnd(() => {
     if (editable) {
@@ -288,11 +325,17 @@ export default function ShapeView({
           {/* 기울기(회전) 핸들 — ㄱ자(L) 도형만. 나머지는 회전 불필요(#1). */}
           {canRotate ? (
             <GestureDetector gesture={rotate}>
-              <View style={[styles.handle, styles.rotateHandle]} hitSlop={handleSlop} />
+              <Animated.View
+                style={[styles.handle, styles.rotateHandle, rotateHandleStyle]}
+                hitSlop={handleSlop}
+              />
             </GestureDetector>
           ) : null}
           <GestureDetector gesture={resize}>
-            <View style={[styles.handle, styles.resizeHandle]} hitSlop={handleSlop} />
+            <Animated.View
+              style={[styles.handle, styles.resizeHandle, resizeHandleStyle]}
+              hitSlop={handleSlop}
+            />
           </GestureDetector>
         </>
       ) : null}
