@@ -2,12 +2,13 @@
 // 데이터는 useMaterialPanel 훅 경유. 이미지는 로컬 복사. 토큰만 사용.
 import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { ChevronDown, ChevronRight, ChevronUp, Trash2, X } from 'lucide-react-native';
-import { useRef, useState } from 'react';
-import { Alert, Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { type ComponentProps, type ComponentType, useRef, useState } from 'react';
+import { Alert, Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import LocalImage from '@shared/components/customs/LocalImage';
-import { colors, radius, scrim, spacing, typography } from '@shared/theme';
+import { colors, layout, radius, scrim, spacing, typography } from '@shared/theme';
 import { utilHaptic, utilHapticNotify } from '@shared/utils/util_haptics';
 
 import { DEFAULT_MATERIAL_NAME } from '@entities/material/consts';
@@ -22,24 +23,48 @@ interface Props {
   editable: boolean;
   /** 시트 닫기(명시적 닫기 버튼용). 없으면 버튼 숨김. */
   onRequestClose?: () => void;
+  /**
+   * 렌더 컨테이너. 'sheet'(기본)=바텀시트 내부(Viewer 읽기용, gorhom 스크롤/입력),
+   * 'screen'=풀스크린 라우트(Edit 편집용, 일반 KeyboardAware 스크롤/입력).
+   * gorhom 스크롤러블은 시트 밖에서 동작 안 하므로 컨테이너별로 프리미티브를 교체한다.
+   */
+  variant?: 'sheet' | 'screen';
 }
+
+/** name/desc/tag 입력에 쓰는 TextInput 계열 컴포넌트 타입. */
+type InputComponentType = ComponentType<ComponentProps<typeof TextInput>>;
 
 /** 스크롤 to-end 가능한 최소 인터페이스. */
 type ScrollLike = { scrollToEnd: (opts?: { animated?: boolean }) => void };
 
-export default function MaterialPanel({ shapeId, title, editable, onRequestClose }: Props) {
+export default function MaterialPanel({
+  shapeId,
+  title,
+  editable,
+  onRequestClose,
+  variant = 'sheet',
+}: Props) {
   const { materials, loaded, addMaterial, updateMaterial, removeMaterial, clearImage, move } =
     useMaterialPanel(shapeId);
   const pickImage = useMaterialImagePick();
   const scrollRef = useRef<ScrollLike | null>(null);
+
+  // 컨테이너별 스크롤/입력 프리미티브. 'screen'은 시트 밖이라 gorhom 대신 일반 컴포넌트 사용.
+  const Scroll: ComponentType<any> =
+    variant === 'screen' ? KeyboardAwareScrollView : BottomSheetScrollView;
+  const InputComponent: InputComponentType =
+    variant === 'screen' ? TextInput : (BottomSheetTextInput as never);
   // 전체화면으로 볼 이미지(Viewer 확대).
   const [viewerUri, setViewerUri] = useState<string | null>(null);
+  // 방금 추가한 층 id — 이름 입력에 자동 포커스 + 전체선택(첫 입력으로 바로 덮어쓰기).
+  const [newlyAddedId, setNewlyAddedId] = useState<string | null>(null);
 
   const sorted = [...materials].sort((a, b) => a.layerOrder - b.layerOrder);
 
-  // 새 층 추가 → 목록 맨 아래로 스크롤(화면 밖 추가 방지).
+  // 새 층 추가 → 목록 맨 아래로 스크롤(화면 밖 추가 방지) + 이름 입력 자동 포커스.
   const onAddMaterial = async () => {
-    await addMaterial();
+    const created = await addMaterial();
+    setNewlyAddedId(created.id);
     utilHaptic('light');
     requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
   };
@@ -47,26 +72,26 @@ export default function MaterialPanel({ shapeId, title, editable, onRequestClose
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Text style={[typography.heading, styles.headerTitle]} numberOfLines={1}>
-          {title}
-        </Text>
-        <View style={styles.headerRight}>
-          <Text style={typography.metadata}>자재 {materials.length}개</Text>
-          {onRequestClose ? (
-            <Pressable
-              onPress={onRequestClose}
-              hitSlop={10}
-              accessibilityRole='button'
-              accessibilityLabel='닫기'
-              style={({ pressed }) => [styles.closeBtn, pressed && styles.dim]}
-            >
-              <X size={20} color={colors.textSecondary} strokeWidth={2} />
-            </Pressable>
-          ) : null}
+        <View style={styles.headerLeft}>
+          <Text style={[typography.heading, styles.headerTitle]} numberOfLines={1}>
+            {title}
+          </Text>
+          <Text style={[typography.metadata, styles.headerCount]}>자재 {materials.length}개</Text>
         </View>
+        {onRequestClose ? (
+          <Pressable
+            onPress={onRequestClose}
+            hitSlop={10}
+            accessibilityRole='button'
+            accessibilityLabel='완료'
+            style={({ pressed }) => [styles.doneBtn, pressed && styles.dim]}
+          >
+            <Text style={[typography.button, { color: colors.blue }]}>완료</Text>
+          </Pressable>
+        ) : null}
       </View>
 
-      <BottomSheetScrollView
+      <Scroll
         ref={scrollRef as never}
         style={styles.scroll}
         contentContainerStyle={styles.list}
@@ -88,6 +113,9 @@ export default function MaterialPanel({ shapeId, title, editable, onRequestClose
               layerNo={idx + 1}
               isFirst={idx === 0}
               isLast={idx === sorted.length - 1}
+              InputComponent={InputComponent}
+              autoFocusName={m.id === newlyAddedId}
+              onNameFocus={() => setNewlyAddedId(null)}
               onChange={patch => updateMaterial(m.id, patch)}
               onPickImage={async () => {
                 const picked = await pickImage(m.id);
@@ -123,7 +151,7 @@ export default function MaterialPanel({ shapeId, title, editable, onRequestClose
             <ReadCard key={m.id} material={m} layerNo={idx + 1} onOpenImage={setViewerUri} />
           ),
         )}
-      </BottomSheetScrollView>
+      </Scroll>
 
       {editable ? (
         <Pressable
@@ -157,6 +185,12 @@ interface EditCardProps {
   layerNo: number;
   isFirst: boolean;
   isLast: boolean;
+  /** 컨테이너별 TextInput 컴포넌트(시트=BottomSheetTextInput / 스크린=TextInput). */
+  InputComponent: InputComponentType;
+  /** 방금 추가된 층이면 이름 입력에 자동 포커스 + 전체선택. */
+  autoFocusName?: boolean;
+  /** 이름 입력이 실제 포커스를 받으면 호출(자동 포커스 재발동 방지). */
+  onNameFocus?: () => void;
   onChange: (patch: Partial<IMaterial>) => void;
   onPickImage: () => void;
   onClearImage: () => void;
@@ -169,6 +203,9 @@ function EditCard({
   layerNo,
   isFirst,
   isLast,
+  InputComponent,
+  autoFocusName,
+  onNameFocus,
   onChange,
   onPickImage,
   onClearImage,
@@ -199,10 +236,13 @@ function EditCard({
           <View style={styles.layerRow}>
             <Text style={styles.layerBadge}>{layerNo}층</Text>
           </View>
-          <BottomSheetTextInput
+          <InputComponent
             key={material.name}
             style={styles.nameInput}
             defaultValue={material.name}
+            autoFocus={autoFocusName}
+            selectTextOnFocus={autoFocusName}
+            onFocus={onNameFocus}
             onEndEditing={e =>
               onChange({ name: e.nativeEvent.text.trim() || DEFAULT_MATERIAL_NAME })
             }
@@ -212,10 +252,11 @@ function EditCard({
             returnKeyType='done'
           />
           <TagEditor
+            InputComponent={InputComponent}
             tags={material.tags ?? []}
             onChange={tags => onChange({ tags: tags.length ? tags : undefined })}
           />
-          <BottomSheetTextInput
+          <InputComponent
             style={styles.descInput}
             defaultValue={material.description ?? ''}
             onEndEditing={e => onChange({ description: e.nativeEvent.text.trim() || undefined })}
@@ -328,7 +369,15 @@ function ReadCard({
 }
 
 // ── 태그 편집기 — 칩 추가/삭제. 입력 후 Enter 또는 blur 시 추가, 칩 탭 시 삭제 ──
-function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string[]) => void }) {
+function TagEditor({
+  InputComponent,
+  tags,
+  onChange,
+}: {
+  InputComponent: InputComponentType;
+  tags: string[];
+  onChange: (tags: string[]) => void;
+}) {
   const [draft, setDraft] = useState('');
 
   const add = () => {
@@ -350,7 +399,7 @@ function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string
           <X size={14} color={colors.blue} strokeWidth={2} />
         </Pressable>
       ))}
-      <BottomSheetTextInput
+      <InputComponent
         style={styles.tagInput}
         value={draft}
         onChangeText={setDraft}
@@ -376,14 +425,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: spacing.sm,
   },
+  headerLeft: { flexDirection: 'row', alignItems: 'baseline', gap: spacing.sm, flexShrink: 1 },
   headerTitle: { flexShrink: 1 },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  closeBtn: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
+  headerCount: { color: colors.textSecondary, flexShrink: 0 },
+  doneBtn: {
+    minHeight: spacing.xl4,
     justifyContent: 'center',
-    borderRadius: radius.circle,
+    paddingHorizontal: spacing.xs,
   },
   list: { gap: spacing.md, paddingBottom: spacing.sm },
   empty: { color: colors.textSecondary, textAlign: 'center', paddingVertical: spacing.xl2 },
@@ -426,6 +474,8 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     paddingVertical: spacing.xs,
     minHeight: 32,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
   },
   tagWrap: {
     flexDirection: 'row',
@@ -439,11 +489,11 @@ const styles = StyleSheet.create({
   tagChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: spacing.xs,
     backgroundColor: colors.blueTint,
     paddingLeft: spacing.sm,
     paddingRight: spacing.xs,
-    paddingVertical: 3,
+    paddingVertical: spacing.xs,
     borderRadius: radius.soft,
   },
   tagChipText: { ...typography.metadata, color: colors.blue },
@@ -457,8 +507,8 @@ const styles = StyleSheet.create({
   readTags: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   cardActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   miniBtn: {
-    minWidth: 44,
-    minHeight: 44,
+    minWidth: spacing.xl4,
+    minHeight: spacing.xl4,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.soft,
     alignItems: 'center',
@@ -469,7 +519,7 @@ const styles = StyleSheet.create({
   deleteMini: { backgroundColor: colors.canvas },
   dim: { opacity: 0.55 },
   readRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  readThumb: { width: 44, height: 44, borderRadius: radius.soft },
+  readThumb: { width: spacing.xl4, height: spacing.xl4, borderRadius: radius.soft },
   readMain: { flex: 1, gap: spacing.xs },
   readNameLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   readName: { flexShrink: 1 },
@@ -482,12 +532,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xs,
   },
   addBtn: {
-    minHeight: 48,
+    minHeight: layout.buttonHeight,
     borderRadius: radius.standard,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.blue,
-    marginHorizontal: spacing.xl,
   },
   addBtnPressed: { backgroundColor: colors.bluePressed },
   viewerBackdrop: {

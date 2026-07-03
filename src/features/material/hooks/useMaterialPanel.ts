@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { utilCreateId } from '@shared/utils/util_id';
 import { utilDeleteAppImage } from '@shared/utils/util_image';
 
-import { DEFAULT_MATERIAL_NAME } from '@entities/material/consts';
 import type { IMaterial } from '@entities/material/types';
 
 import repoMaterialDelete from '../repositories/delete_material';
@@ -25,14 +24,14 @@ export function useMaterialPanel(shapeId: string) {
     load();
   }, [load]);
 
-  /** 새 자재(층)을 맨 위에 쌓는다(layerOrder = 다음 값). 이름 기본값으로 즉시 생성. */
+  /** 새 자재(층)을 맨 위에 쌓는다(layerOrder = 다음 값). 이름은 빈 값 — 입력창에서 바로 타이핑. */
   const addMaterial = useCallback(async (): Promise<IMaterial> => {
     const nextOrder = materials.reduce((m, x) => Math.max(m, x.layerOrder), -1) + 1;
     const material: IMaterial = {
       id: utilCreateId(),
       shapeId,
       layerOrder: nextOrder,
-      name: DEFAULT_MATERIAL_NAME,
+      name: '',
     };
     await repoMaterialSave(material);
     setMaterials(prev => [...prev, material]);
