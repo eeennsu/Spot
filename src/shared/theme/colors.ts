@@ -87,3 +87,9 @@ export const darkColors = {
  * DESIGN.md §6: Things 은 스크림도 가볍게 (≈0.2).
  */
 export const scrim = 'rgba(0,0,0,0.2)' as const;
+
+/**
+ * 튜토리얼 스포트라이트 스크림 — 대상 외 영역을 진하게 눌러 초점을 만든다.
+ * 일반 scrim(0.2)보다 어둡게(게임 코치마크 느낌). 단일 소스: 여기서만 조절.
+ */
+export const tutorialScrim = 'rgba(0,0,0,0.6)' as const;

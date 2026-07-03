@@ -1,5 +1,5 @@
 // ── 통합 theme 객체 ────────────────────────────────────────────────
-import { colors, darkColors, scrim } from './colors';
+import { colors, darkColors, scrim, tutorialScrim } from './colors';
 import { elevation, overlay } from './elevation';
 import { duration, spring, motion, haptics } from './motion';
 import { palette } from './palette';
@@ -10,7 +10,7 @@ import { typography, fontFamily } from './typography';
 // Things 3 테마 배럴. 출처: DESIGN.md / DESIGN-expo.md.
 // 교체 이력: Linear 다크 팔레트(src/theme/) → Things 3 라이트 팔레트(src/shared/theme/).
 
-export { colors, darkColors, scrim } from './colors';
+export { colors, darkColors, scrim, tutorialScrim } from './colors';
 export type { ThingsColor } from './colors';
 
 export { typography, fontFamily } from './typography';
@@ -39,6 +39,7 @@ export const theme = {
   colors,
   darkColors,
   scrim,
+  tutorialScrim,
   typography,
   fontFamily,
   spacing,

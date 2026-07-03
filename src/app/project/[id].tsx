@@ -12,6 +12,7 @@ import { useLearnStore } from '@features/learn/stores/learn';
 import { useProjectGet } from '@features/project/hooks/useProjectGet';
 import SearchOverlay from '@features/search/ui/SearchOverlay';
 import { useEditorStore } from '@features/shape/stores/editor';
+import TutorialButton from '@features/tutorial/ui/TutorialButton';
 
 import ProjectCanvas from '@widgets/ProjectCanvas';
 
@@ -48,6 +49,7 @@ export default function ProjectDetailScreen() {
           title: project?.name ?? '평면도',
           headerRight: () => (
             <View style={styles.headerRow}>
+              <TutorialButton />
               <Pressable
                 onPress={() => setSearchVisible(true)}
                 hitSlop={10}
@@ -104,7 +106,7 @@ const styles = StyleSheet.create({
   loading: { flex: 1, backgroundColor: colors.canvas },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   headerBtn: {
-    minHeight: 44,
+    minHeight: spacing.xl4,
     justifyContent: 'center',
     paddingHorizontal: spacing.xs,
   },
