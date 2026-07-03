@@ -1,6 +1,6 @@
 // 프로젝트 목록 + 전역 검색. 행 탭 → 상세. 검색 결과 탭 → 해당 프로젝트 도형으로 이동.
 import { Stack, useRouter } from 'expo-router';
-import { Map, Pencil, Plus, Trash2 } from 'lucide-react-native';
+import { AlertCircle, Map, Pencil, Plus, Trash2 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
   FlatList,
@@ -28,7 +28,7 @@ import SearchResultList from '@features/search/ui/SearchResultList';
 
 export default function ProjectsScreen() {
   const router = useRouter();
-  const { projects, load, loading } = useProjectList();
+  const { projects, load, loading, error } = useProjectList();
   const addProject = useProjectCreate();
   const renameProject = useProjectRename();
   const removeProject = useProjectDelete();
@@ -122,6 +122,20 @@ export default function ProjectsScreen() {
           showProject
           onSelect={r => router.push(`/project/${r.projectId}?focus=${r.shapeId}`)}
         />
+      ) : error && !loading ? (
+        // 목록 로드 실패 — 무한 로딩/빈 화면에 갇히지 않도록 재시도 가능한 에러 상태를 보여준다.
+        <View style={styles.emptyState}>
+          <AlertCircle size={40} color={colors.deadline} strokeWidth={1.5} />
+          <Text style={[typography.body, styles.emptyText]}>{error}</Text>
+          <Pressable
+            onPress={() => load()}
+            accessibilityRole='button'
+            accessibilityLabel='다시 시도'
+            style={({ pressed }) => [styles.emptyCta, pressed && styles.addBtnPressed]}
+          >
+            <Text style={[typography.button, { color: colors.canvas }]}>다시 시도</Text>
+          </Pressable>
+        </View>
       ) : (
         <>
           <FlatList
