@@ -66,7 +66,6 @@ export default function ShapePalette({ onAdd }: Props) {
 
   return (
     <View style={styles.wrap}>
-      <Text style={styles.hint}>도형을 누르면 캔버스에 추가돼요</Text>
       <View style={styles.scrollWrap}>
         <ScrollView
           horizontal
@@ -119,7 +118,7 @@ export default function ShapePalette({ onAdd }: Props) {
 
 const styles = StyleSheet.create({
   wrap: { gap: spacing.xs, paddingTop: spacing.sm },
-  hint: { ...typography.metadata, color: colors.textTertiary, paddingHorizontal: spacing.lg },
+
   scrollWrap: { position: 'relative' },
   row: { gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
   item: {
