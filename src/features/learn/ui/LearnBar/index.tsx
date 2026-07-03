@@ -1,5 +1,6 @@
 // 학습 하단 바 — 진행/점수/문제/피드백. 위치=캔버스 탭으로 응답, 이름=보기 선택.
 import { Check, X } from 'lucide-react-native';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,9 +13,11 @@ import { useLearnStore } from '../../stores/learn';
 interface Props {
   /** 같은 유형으로 다시 시작 */
   onRestart: () => void;
+  /** 반대 유형으로 다시 시작 */
+  onOther: () => void;
 }
 
-export default function LearnBar({ onRestart }: Props) {
+export default function LearnBar({ onRestart, onOther }: Props) {
   const insets = useSafeAreaInsets();
   const {
     active,
@@ -30,6 +33,11 @@ export default function LearnBar({ onRestart }: Props) {
     next,
     stop,
   } = useLearnStore();
+
+  // 완료 순간 축하 햅틱(점수 확정 피드백).
+  useEffect(() => {
+    if (finished) utilHapticNotify('success');
+  }, [finished]);
 
   if (!active) return null;
 
@@ -73,6 +81,12 @@ export default function LearnBar({ onRestart }: Props) {
               style={({ pressed }) => [styles.actBtn, styles.actPrimary, pressed && styles.dim]}
             >
               <Text style={[typography.button, { color: colors.canvas }]}>다시</Text>
+            </Pressable>
+            <Pressable
+              onPress={onOther}
+              style={({ pressed }) => [styles.actBtn, pressed && styles.dim]}
+            >
+              <Text style={typography.button}>다른 유형</Text>
             </Pressable>
             <Pressable
               onPress={stop}

@@ -69,8 +69,8 @@ const MAX_SCALE = 3;
 const ABS_MIN_FIT = 0.03;
 /** Edit 모드 fit 비율(조작 여백 확보) */
 const BOARD_FIT_RATIO = 0.92;
-/** Viewer 모드 fit 비율(화면 꽉 채움) */
-const BOARD_FILL_RATIO = 1.0;
+/** Viewer 모드 fit 비율(contain — 도화지 전체가 한 눈에, 가장자리 약간 여백) */
+const BOARD_VIEWER_RATIO = 0.98;
 /** 도화지 리사이즈 핸들 지름(dp) */
 const HANDLE = 28;
 /** Viewer FAB 세로 스택 간격 — 버튼 높이 + 여백(매직넘버 대신 토큰 조합) */
@@ -101,7 +101,8 @@ export default function ProjectCanvas({
   projectName,
 }: Props) {
   const insets = useSafeAreaInsets();
-  const canvasRef = useRef<View>(null);
+  // PDF 캡처 대상 — 도화지 뷰 자체(뷰포트 아님). 줌/팬·클리핑 무관하게 도화지 전체가 잡힌다.
+  const boardCaptureRef = useRef<View>(null);
   const { exportPdf, exporting } = useExportPdf();
   const { shapes, loaded, addShape, updateShape, removeShape } = useShapeCanvas(projectId);
   // 프로젝트별 도화지 크기(조절 대상). board.{w,h} 는 JS 값(ShapeView 클램프용),
@@ -196,6 +197,8 @@ export default function ProjectCanvas({
   const learnType = useLearnStore(s => s.type);
   const learnIndex = useLearnStore(s => s.index);
   const learnNameQs = useLearnStore(s => s.name);
+  const learnPositionQs = useLearnStore(s => s.position);
+  const learnAnswered = useLearnStore(s => s.answered);
   const startLearnStore = useLearnStore(s => s.start);
   const answerPosition = useLearnStore(s => s.answerPosition);
   const stopLearn = useLearnStore(s => s.stop);
@@ -205,8 +208,18 @@ export default function ProjectCanvas({
     if (editable && learnActive) stopLearn();
   }, [editable, learnActive, stopLearn]);
 
-  const learnTargetShapeId =
-    learnActive && learnType === 'name' ? learnNameQs[learnIndex]?.shapeId : undefined;
+  // 학습 하이라이트 대상 도형 id 들.
+  // - 이름 맞히기: 문제가 나오면 즉시 대상 도형 강조(무엇을 묻는지 표시).
+  // - 위치 맞히기: 응답 후에만 정답 도형(들) 공개(오답이어도 위치를 배우게).
+  const learnHighlightIds = useMemo<string[]>(() => {
+    if (!learnActive) return [];
+    if (learnType === 'name') {
+      const id = learnNameQs[learnIndex]?.shapeId;
+      return id ? [id] : [];
+    }
+    if (learnAnswered) return learnPositionQs[learnIndex]?.correctShapeIds ?? [];
+    return [];
+  }, [learnActive, learnType, learnNameQs, learnPositionQs, learnIndex, learnAnswered]);
 
   const startLearn = async (type: ILearnType) => {
     const set = await reloadQuiz();
@@ -268,8 +281,8 @@ export default function ProjectCanvas({
     [canvasSize.w, canvasSize.h, board.w, board.h],
   );
 
-  // 더블탭·복귀용 — 현재 모드에 맞는 fit 로 애니메이션. Viewer 는 cover(화면 꽉 채움).
-  const resetFit = () => fitBoard(editable ? BOARD_FIT_RATIO : BOARD_FILL_RATIO, true, !editable);
+  // 더블탭·복귀용 — 현재 모드에 맞는 fit 로 애니메이션. 두 모드 모두 contain(전체가 한 눈에).
+  const resetFit = () => fitBoard(editable ? BOARD_FIT_RATIO : BOARD_VIEWER_RATIO, true, false);
 
   // 최초 측정 시 fit(크기 제한 공간 인지). 모드에 맞는 비율로.
   const didFit = useRef(false);
@@ -277,38 +290,62 @@ export default function ProjectCanvas({
     // boardNormalized 대기: 기본 크기 프로젝트는 캔버스 맞춤 저장이 끝난 board 로 fit 해야 한다.
     if (didFit.current || canvasSize.w === 0 || !boardLoaded || !boardNormalized) return;
     didFit.current = true;
-    fitBoard(editable ? BOARD_FIT_RATIO : BOARD_FILL_RATIO, false, !editable);
+    fitBoard(editable ? BOARD_FIT_RATIO : BOARD_VIEWER_RATIO, false, false);
     contentOpacity.value = withTiming(1, { duration: 200 });
   }, [canvasSize.w, canvasSize.h, boardLoaded, boardNormalized, editable, fitBoard, contentOpacity]);
 
-  // Viewer 진입 시 화면 꽉 채우도록 재정렬(확대해 보다가 돌아와도 정위치 복귀).
+  // Viewer 진입 시 전체가 한 눈에 들어오도록 재정렬(확대해 보다가 돌아와도 정위치 복귀).
   useEffect(() => {
     if (!boardLoaded || canvasSize.w === 0 || !didFit.current) return;
-    if (!editable) fitBoard(BOARD_FILL_RATIO, true, true);
+    if (!editable) fitBoard(BOARD_VIEWER_RATIO, true, false);
   }, [editable, boardLoaded, canvasSize.w, canvasSize.h, fitBoard]);
 
-  // 검색 결과 포커스: 살짝만 확대 + 대상 중앙 정렬 + 하이라이트(시트는 열지 않음).
-  useEffect(() => {
-    if (!focusShapeId || !loaded || canvasSize.w === 0) return;
-    const target = shapes.find(s => s.id === focusShapeId);
-    if (!target) return;
-    // Viewer 안정 배율(cover) 대비 살짝만 확대(과확대 방지). 중앙정렬 pan 은 s 에 비례.
-    const coverS = Math.max(canvasSize.w / board.w, canvasSize.h / board.h);
-    const s = Math.min(Math.max(coverS * 1.3, MIN_SCALE), MAX_SCALE);
-    const cx = target.x + target.width / 2;
-    const cy = target.y + target.height / 2;
-    // 대상 중앙정렬 pan 도 도화지 밖 여백이 드러나지 않게 가둔다(Viewer 잠금과 일관).
-    const tx = clampPanAxis(s * (canvasSize.w / 2 - cx), s, board.w, canvasSize.w);
-    const ty = clampPanAxis(s * (canvasSize.h / 2 - cy), s, board.h, canvasSize.h);
-    scale.value = withTiming(s, { duration: 260 });
-    panX.value = withTiming(tx, { duration: 260 });
-    panY.value = withTiming(ty, { duration: 260 });
-    setHighlightId(target.id);
-    const t = setTimeout(() => setHighlightId(null), 1800);
-    return () => clearTimeout(t);
+  // 특정 도형을 살짝 확대 + 중앙 정렬(검색 이동·학습 하이라이트 공용).
+  const centerOnShape = useCallback(
+    (shapeId: string) => {
+      if (canvasSize.w === 0) return;
+      const target = shapes.find(s => s.id === shapeId);
+      if (!target) return;
+      // Viewer 안정 배율(cover) 대비 살짝만 확대(과확대 방지). 중앙정렬 pan 은 s 에 비례.
+      const coverS = Math.max(canvasSize.w / board.w, canvasSize.h / board.h);
+      const s = Math.min(Math.max(coverS * 1.3, MIN_SCALE), MAX_SCALE);
+      const cx = target.x + target.width / 2;
+      const cy = target.y + target.height / 2;
+      // 대상 중앙정렬 pan 도 도화지 밖 여백이 드러나지 않게 가둔다(Viewer 잠금과 일관).
+      const tx = clampPanAxis(s * (canvasSize.w / 2 - cx), s, board.w, canvasSize.w);
+      const ty = clampPanAxis(s * (canvasSize.h / 2 - cy), s, board.h, canvasSize.h);
+      scale.value = withTiming(s, { duration: 260 });
+      panX.value = withTiming(tx, { duration: 260 });
+      panY.value = withTiming(ty, { duration: 260 });
+    },
     // panX/panY/scale 는 shared value(안정 참조)라 deps 제외
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusShapeId, loaded, canvasSize.w, canvasSize.h, shapes]);
+    [canvasSize.w, canvasSize.h, board.w, board.h, shapes],
+  );
+
+  // 검색 결과 포커스: 대상 중앙 정렬 + 하이라이트(시트는 열지 않음).
+  useEffect(() => {
+    if (!focusShapeId || !loaded || canvasSize.w === 0) return;
+    if (!shapes.some(s => s.id === focusShapeId)) return;
+    centerOnShape(focusShapeId);
+    setHighlightId(focusShapeId);
+    const t = setTimeout(() => setHighlightId(null), 1800);
+    return () => clearTimeout(t);
+  }, [focusShapeId, loaded, canvasSize.w, shapes, centerOnShape]);
+
+  // 학습 이름 맞히기: 문제(대상 도형)가 바뀌면 그 도형으로 이동(화면 밖이면 안 보이므로).
+  useEffect(() => {
+    if (!learnActive || learnType !== 'name') return;
+    const id = learnNameQs[learnIndex]?.shapeId;
+    if (id) centerOnShape(id);
+  }, [learnActive, learnType, learnIndex, learnNameQs, centerOnShape]);
+
+  // 학습 위치 맞히기: 응답하면 정답 도형으로 이동해 위치를 공개(오답도 학습되게).
+  useEffect(() => {
+    if (!learnActive || learnType !== 'position' || !learnAnswered) return;
+    const ids = learnPositionQs[learnIndex]?.correctShapeIds;
+    if (ids && ids.length > 0) centerOnShape(ids[0]);
+  }, [learnActive, learnType, learnAnswered, learnPositionQs, learnIndex, centerOnShape]);
 
   const captionOf = (shape: IShape): { name: string; extra: number } | undefined => {
     if (shape.category !== 'material') return undefined;
@@ -322,10 +359,10 @@ export default function ProjectCanvas({
   // → 첫 몇 번 스와이프가 캔버스로 먹혀 "여러 번 당겨야 스크롤됨" 증상. 시트 열리면 캔버스 제스처 비활성.
   const sheetOpen = !!sheetShape;
 
-  // Viewer 최소 스케일 = cover fit(화면 꽉 채우는 배율). 이보다 축소하면 여백이 생기므로 하한.
+  // Viewer 최소 스케일 = contain fit(전체가 한 눈에 들어오는 배율). 이보다 축소 금지(과도한 여백 방지).
   const viewerFitScale = useMemo(() => {
     if (canvasSize.w === 0) return MIN_SCALE;
-    const fit = Math.max(canvasSize.w / board.w, canvasSize.h / board.h) * BOARD_FILL_RATIO;
+    const fit = Math.min(canvasSize.w / board.w, canvasSize.h / board.h) * BOARD_VIEWER_RATIO;
     return Math.min(Math.max(fit, ABS_MIN_FIT), MAX_SCALE);
   }, [canvasSize.w, canvasSize.h, board.w, board.h]);
 
@@ -501,7 +538,6 @@ export default function ProjectCanvas({
   return (
     <View style={styles.root}>
       <View
-        ref={canvasRef}
         collapsable={false}
         style={styles.canvas}
         onLayout={e =>
@@ -513,37 +549,44 @@ export default function ProjectCanvas({
         </GestureDetector>
 
         <Animated.View style={[StyleSheet.absoluteFill, contentStyle]} pointerEvents='box-none'>
-          {/* 도화지 — 크기 제한 있는 배치 영역(검은 테두리). 시각용이라 터치 통과. */}
-          <Animated.View style={[styles.board, boardStyle]} pointerEvents='none' />
-          {shapes.map(shape => (
-            <ShapeView
-              key={shape.id}
-              shape={shape}
-              editable={editable}
-              selected={selectedId === shape.id}
-              scale={scale}
-              boardWidth={board.w}
-              boardHeight={board.h}
-              canvasPanRef={canvasPanRef as never}
-              onSelect={select}
-              onTapViewer={onTapViewer}
-              onCommit={updateShape}
-              caption={learnActive ? undefined : captionOf(shape)}
-              highlighted={highlightId === shape.id || learnTargetShapeId === shape.id}
-            />
-          ))}
-
-          {/* 도화지 우하단 크기 조절 핸들 — Edit 에서만. 보드 변환 안에 있어 pan/zoom 따라감. */}
-          {editable ? (
-            <GestureDetector gesture={boardResize}>
-              <Animated.View
-                ref={boardHandleAnchor.ref as never}
-                onLayout={boardHandleAnchor.onLayout}
-                style={[styles.boardHandle, boardHandleStyle]}
-                hitSlop={20}
+          {/* 도화지(테두리) + 도형들을 한 컨테이너로 — PDF 캡처 대상(줌/팬 무관 전체 캡처).
+              box-none: 빈 도화지 영역 터치는 아래 제스처 레이어로 통과, 도형만 개별 처리. */}
+          <Animated.View
+            ref={boardCaptureRef as never}
+            collapsable={false}
+            style={[styles.board, boardStyle]}
+            pointerEvents='box-none'
+          >
+            {shapes.map(shape => (
+              <ShapeView
+                key={shape.id}
+                shape={shape}
+                editable={editable}
+                selected={selectedId === shape.id}
+                scale={scale}
+                boardWidth={board.w}
+                boardHeight={board.h}
+                canvasPanRef={canvasPanRef as never}
+                onSelect={select}
+                onTapViewer={onTapViewer}
+                onCommit={updateShape}
+                caption={learnActive ? undefined : captionOf(shape)}
+                highlighted={highlightId === shape.id || learnHighlightIds.includes(shape.id)}
               />
-            </GestureDetector>
-          ) : null}
+            ))}
+
+            {/* 도화지 우하단 크기 조절 핸들 — Edit 에서만. 보드 변환 안에 있어 pan/zoom 따라감. */}
+            {editable ? (
+              <GestureDetector gesture={boardResize}>
+                <Animated.View
+                  ref={boardHandleAnchor.ref as never}
+                  onLayout={boardHandleAnchor.onLayout}
+                  style={[styles.boardHandle, boardHandleStyle]}
+                  hitSlop={20}
+                />
+              </GestureDetector>
+            ) : null}
+          </Animated.View>
         </Animated.View>
 
         {showEmpty ? (
@@ -571,7 +614,7 @@ export default function ProjectCanvas({
         {editable ? (
           <View style={[styles.boardInfo, { top: spacing.sm }]} pointerEvents='none'>
             <Text style={styles.boardInfoText}>
-              도화지 {board.w}×{board.h} · 우하단 모서리로 크기 조절
+              도화지 {Math.round(board.w)}×{Math.round(board.h)} · 우하단 모서리로 크기 조절
             </Text>
           </View>
         ) : null}
@@ -631,6 +674,7 @@ export default function ProjectCanvas({
             onLayout={fabLearnAnchor.onLayout}
             onPress={() => {
               utilHaptic('light');
+              reloadQuiz(); // 세션 중 추가된 자재까지 반영해 count 갱신(게이트 최신화)
               learnSheet.present();
             }}
             accessibilityRole='button'
@@ -649,7 +693,7 @@ export default function ProjectCanvas({
             onLayout={fabPdfAnchor.onLayout}
             onPress={() => {
               utilHaptic('light');
-              exportPdf({ viewRef: canvasRef, projectId, title: projectName ?? '평면도' });
+              exportPdf({ viewRef: boardCaptureRef, title: projectName ?? '평면도' });
             }}
             disabled={exporting}
             accessibilityRole='button'
@@ -667,7 +711,12 @@ export default function ProjectCanvas({
       ) : null}
 
       {/* 학습 하단 바 */}
-      {learnActive ? <LearnBar onRestart={() => startLearn(learnType)} /> : null}
+      {learnActive ? (
+        <LearnBar
+          onRestart={() => startLearn(learnType)}
+          onOther={() => startLearn(learnType === 'position' ? 'name' : 'position')}
+        />
+      ) : null}
 
       {/* 학습 시작 선택 시트 */}
       <LearnStart sheetRef={learnSheet.ref} count={learnCount} onPick={startLearn} />

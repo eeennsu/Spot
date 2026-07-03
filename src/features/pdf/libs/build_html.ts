@@ -1,45 +1,25 @@
-// 평면도 PDF용 HTML 빌더(순수 함수). 도형으로 구성된 평면도 캡처 이미지만 담는다.
-// (자재 목록은 앱 안에서 열람 — PDF 는 평면도 자체만.)
-import { colors, radius, typography } from '@shared/theme';
-
+// 평면도 PDF용 HTML(순수 함수). 순수 도화지 캡처 이미지만 — 제목/날짜/테두리 없음.
+// 비율 유지: contain 으로 한 페이지 안에 잘림·왜곡 없이 맞춘다.
 interface BuildArgs {
-  title: string;
-  /** 캔버스 캡처 data-uri(png) */
+  /** 도화지 캡처 data-uri(png) */
   image: string;
-  /** 출력 일시 표시 문자열 */
-  dateText: string;
 }
 
-function esc(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-export default function buildPdfHtml({ title, image, dateText }: BuildArgs): string {
+export default function buildPdfHtml({ image }: BuildArgs): string {
   return `<!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <style>
-  * { box-sizing: border-box; }
-  body { font-family: sans-serif; color: ${colors.textPrimary}; margin: 0; padding: 28px; }
-  header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; }
-  h1 { font-size: ${typography.projectTitle.fontSize}px; margin: 0; }
-  .date { color: ${colors.textSecondary}; font-size: ${typography.metadata.fontSize}px; }
-  .plan { width: 100%; border: 1px solid ${colors.divider}; border-radius: ${radius.comfortable}px; overflow: hidden; }
-  .plan img { width: 100%; display: block; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  .wrap { display: flex; align-items: center; justify-content: center; width: 100%; height: 100vh; }
+  /* max-* 만으로 원본 비율 유지하며 페이지 안에 맞춤(왜곡·잘림 없음). */
+  img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
 </style>
 </head>
 <body>
-  <header>
-    <h1>${esc(title)}</h1>
-    <span class="date">${esc(dateText)}</span>
-  </header>
-  <div class="plan"><img src="${image}" /></div>
+  <div class="wrap"><img src="${image}" /></div>
 </body>
 </html>`;
 }
