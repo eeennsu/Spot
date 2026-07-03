@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"grep -rn \\\"no-console\\\" eslint.config.* .eslintrc* 2>/dev/null; cat eslint.config.* 2>/dev/null | head -60\"}",
+  "error": "Exit code 1\n(eval):1: no matches found: .eslintrc*",
+  "timestamp": "2026-07-03T10:17:00.269Z",
+  "retry_count": 1
+}

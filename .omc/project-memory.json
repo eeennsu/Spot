@@ -32,7 +32,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "cd /Users/wonderround/Documents/Git/porfolio/spot; pnpm typecheck > /tmp/tsc.log 2>&1; echo \"EXIT=$?\"; tail -30 /tmp/tsc.log",
+    "buildCommand": "pnpm typecheck > /tmp/tsc.log 2>&1; echo \"TSC=$?\"; tail -30 /tmp/tsc.log",
     "testCommand": null,
     "lintCommand": "pnpm lint",
     "devCommand": "pnpm start",
@@ -164,26 +164,26 @@
   "hotPaths": [
     {
       "path": "src/app/index.tsx",
-      "accessCount": 83,
-      "lastAccessed": 1783063764282,
+      "accessCount": 90,
+      "lastAccessed": 1783073833783,
       "type": "file"
     },
     {
       "path": "src/entities/shape/consts.ts",
-      "accessCount": 42,
-      "lastAccessed": 1783063070922,
+      "accessCount": 86,
+      "lastAccessed": 1783073166270,
       "type": "file"
     },
     {
       "path": "src/app/project/[id].tsx",
-      "accessCount": 41,
-      "lastAccessed": 1783065895106,
+      "accessCount": 44,
+      "lastAccessed": 1783073003037,
       "type": "file"
     },
     {
       "path": "src/app/_layout.tsx",
-      "accessCount": 25,
-      "lastAccessed": 1783063275176,
+      "accessCount": 26,
+      "lastAccessed": 1783072931785,
       "type": "file"
     },
     {
@@ -205,6 +205,12 @@
       "type": "file"
     },
     {
+      "path": "src/entities/material/consts.ts",
+      "accessCount": 13,
+      "lastAccessed": 1783072968362,
+      "type": "file"
+    },
+    {
       "path": "src/shared/db/schema.ts",
       "accessCount": 12,
       "lastAccessed": 1783045230305,
@@ -217,15 +223,9 @@
       "type": "file"
     },
     {
-      "path": "src/entities/material/consts.ts",
-      "accessCount": 10,
-      "lastAccessed": 1783050247907,
-      "type": "file"
-    },
-    {
       "path": "src/entities/material/types.ts",
-      "accessCount": 10,
-      "lastAccessed": 1783050248446,
+      "accessCount": 11,
+      "lastAccessed": 1783072968857,
       "type": "file"
     },
     {
@@ -295,15 +295,15 @@
       "type": "file"
     },
     {
-      "path": "tsconfig.json",
-      "accessCount": 4,
-      "lastAccessed": 1782606873361,
+      "path": "src/features/project/libs/map_row.ts",
+      "accessCount": 5,
+      "lastAccessed": 1783072946749,
       "type": "file"
     },
     {
-      "path": "src/features/project/libs/map_row.ts",
+      "path": "tsconfig.json",
       "accessCount": 4,
-      "lastAccessed": 1783044894332,
+      "lastAccessed": 1782606873361,
       "type": "file"
     },
     {

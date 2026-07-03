@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "entries": {
+    "466399dafa2d20f60587180bad0a07358eb7f2bce724df0ff682f038ad33f5ad": {
+      "last_emitted_at_ms": 1783074230825,
+      "message": "Read multiple files in parallel when possible for faster analysis."
+    },
+    "4f7a67fba0a8473e9883d9e8dffbb2d72e00a4a1eeb4fa80cb14213b167dc90f": {
+      "last_emitted_at_ms": 1783074134035,
+      "message": "Mark todos in_progress BEFORE starting, completed IMMEDIATELY after finishing."
+    },
+    "79a93d4a2f8f50b95f852280616242fee1855dc99a3c75211917f55e72e95fae": {
+      "last_emitted_at_ms": 1783074069459,
+      "message": "Use parallel execution for independent tasks. Use run_in_background for long operations (npm install, builds, tests)."
+    },
+    "85f150478e88a2b0dc479b84f69191c9181b4af06c10e469fd7bbea467cf0d40": {
+      "last_emitted_at_ms": 1783073760272,
+      "message": "Spawning agent: oh-my-claudecode:executor (opus) [BACKGROUND] | Task: Fix P0-4 handle zoom counter-scale"
+    },
+    "445ed27a3872b681d98190bae61ccb84954e1bc4e140df5370be958dee776b3a": {
+      "last_emitted_at_ms": 1783073754041,
+      "message": "Verify changes work after editing. Test functionality before marking complete."
+    },
+    "a86117a213b9f40393fada57b7aeda1ba854138d7bd6bde9ccad47c0fcefa761": {
+      "last_emitted_at_ms": 1783073744932,
+      "message": "Spawning agent: oh-my-claudecode:executor (inherit) [BACKGROUND] | Task: Fix P0-3 PDF failure feedback"
+    },
+    "1e48bfab6b2000f462f6b3abf45d1499f14a513b8382cdfa56912cb004c14e8a": {
+      "last_emitted_at_ms": 1783073735208,
+      "message": "Spawning agent: oh-my-claudecode:executor (opus) [BACKGROUND] | Task: Fix P0-2 material name loss"
+    },
+    "9a00f615fbdc935b15c31fe4441f2aa03fc80b0238f5b000753716390f61a982": {
+      "last_emitted_at_ms": 1783073723232,
+      "message": "Spawning agent: oh-my-claudecode:executor (inherit) [BACKGROUND] | Task: Fix P0-1 project load error"
+    },
+    "d8333a2b493de998f2b385bfaa294be82bb5ae5470ef2f710acbfc47ed64616e": {
+      "last_emitted_at_ms": 1783072948522,
+      "message": "Spawning agent: general-purpose (inherit) [BACKGROUND] | Task: UX audit: search/learn/pdf"
+    },
+    "ee028de7c41fe2f2aa2cb82d0f243260f8c0ca1f1d5d9df7435a25cd52a50942": {
+      "last_emitted_at_ms": 1783072939983,
+      "message": "Spawning agent: general-purpose (inherit) [BACKGROUND] | Task: UX audit: material rack"
+    },
+    "ca011baab23c21ba1564ed144210926b357aa303ff9252918b275328fbe39fe7": {
+      "last_emitted_at_ms": 1783072930550,
+      "message": "Spawning agent: general-purpose (inherit) [BACKGROUND] | Task: UX audit: canvas editing"
+    },
+    "71ad4dbcf34a250e8a1cc74c4781ebe3f414b7f0efcf92ac43ea787c39355c14": {
+      "last_emitted_at_ms": 1783072920978,
+      "message": "Spawning agent: general-purpose (inherit) [BACKGROUND] | Task: UX audit: home/list/create"
+    }
+  },
+  "updated_at": "2026-07-03T10:23:50.825Z"
+}

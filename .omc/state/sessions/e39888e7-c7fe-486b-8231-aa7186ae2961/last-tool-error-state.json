@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"ls -la && echo \\\"---EAS---\\\" && cat eas.json 2>/dev/null && echo \\\"---APP---\\\" && cat app.json 2>/dev/null && echo \\\"---ANDROID DIR---\\\" && ls android 2>/dev/null && echo \\\"EXIT=$?\\\"\",\"des...",
+  "error": "Exit code 1\ntotal 816\ndrwxr-xr-x@  26 wonderround  staff     832 Jul  3 11:27 .\ndrwxr-xr-x@   6 wonderround  staff     192 Jun 29 09:29 ..\ndrwxr-xr-x@   5 wonderround  staff     160 Jun 28 00:31 .claude\ndrwxr-xr-x@   7 wonderround  staff     224 Jul  3 17:23 .expo\ndrwxr-xr-x@  14 wonderround  staff     448 Jul  3 17:17 .git\n-rw-r--r--@   1 wonderround  staff     440 Jun 27 23:13 .gitignore\n-rw-r--r--@   1 wonderround  staff     134 Jun 28 00:23 .npmrc\ndrwxr-xr-x@   6 wonderround  staff     192 J...",
+  "timestamp": "2026-07-03T08:32:07.809Z",
+  "retry_count": 1
+}
