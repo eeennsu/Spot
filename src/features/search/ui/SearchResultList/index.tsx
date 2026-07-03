@@ -13,8 +13,24 @@ interface Props {
   onSelect: (result: ISearchResult) => void;
 }
 
+const KIND_LABEL: Record<ISearchResult['kind'], string> = {
+  material: '자재',
+  alias: '별칭',
+  tag: '태그',
+};
+
 export default function SearchResultList({ results, hasQuery, showProject, onSelect }: Props) {
-  if (hasQuery && results.length === 0) {
+  if (!hasQuery) {
+    return (
+      <View style={styles.empty}>
+        <Text style={[typography.body, styles.emptyText]}>
+          자재 이름·별칭·태그로 검색해 보세요
+        </Text>
+      </View>
+    );
+  }
+
+  if (results.length === 0) {
     return (
       <View style={styles.empty}>
         <Text style={[typography.body, styles.emptyText]}>검색 결과가 없습니다</Text>
@@ -33,13 +49,16 @@ export default function SearchResultList({ results, hasQuery, showProject, onSel
           onPress={() => onSelect(item)}
           style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
         >
-          <View
-            style={[
-              styles.dot,
-              item.kind === 'alias' && styles.dotAlias,
-              item.kind === 'tag' && styles.dotTag,
-            ]}
-          />
+          <View style={styles.kindMark}>
+            <View
+              style={[
+                styles.dot,
+                item.kind === 'alias' && styles.dotAlias,
+                item.kind === 'tag' && styles.dotTag,
+              ]}
+            />
+            <Text style={typography.tinyUpper}>{KIND_LABEL[item.kind]}</Text>
+          </View>
           <View style={styles.texts}>
             <Text style={typography.taskTitle} numberOfLines={1}>
               {item.matched}
@@ -66,6 +85,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   rowPressed: { backgroundColor: colors.surface1 },
+  kindMark: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   dot: { width: 8, height: 8, borderRadius: radius.circle, backgroundColor: colors.blue },
   dotAlias: { backgroundColor: colors.today },
   dotTag: { backgroundColor: colors.success },

@@ -61,6 +61,9 @@ export default function LearnBar({ onRestart }: Props) {
 
       {finished ? (
         <View style={styles.finishWrap}>
+          <Text style={[typography.button, { color: colors.blue }]}>
+            {getEncouragement(score, total)}
+          </Text>
           <Text style={typography.heading}>
             점수 {score} / {total}
           </Text>
@@ -93,6 +96,15 @@ export default function LearnBar({ onRestart }: Props) {
       )}
     </View>
   );
+}
+
+// 점수 비율에 따른 격려 문구 — total 0(문제 없음) 방어.
+function getEncouragement(score: number, total: number): string {
+  if (total === 0) return '';
+  const ratio = score / total;
+  if (ratio >= 1) return '완벽해요!';
+  if (ratio >= 0.7) return '거의 다 왔어요';
+  return '조금만 더!';
 }
 
 function PositionBody({

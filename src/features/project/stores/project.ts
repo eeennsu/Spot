@@ -20,7 +20,9 @@ interface ProjectState {
 
 export const useProjectStore = create<ProjectState>((set, get) => ({
   projects: [],
-  loading: false,
+  // 앱 시작 시 항상 load() 하므로 초기값 true — 콜드 스타트 첫 프레임에
+  // 가짜 빈 상태("첫 평면도 만들기")가 번쩍이는 것을 막는다.
+  loading: true,
 
   async load() {
     set({ loading: true });

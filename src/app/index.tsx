@@ -1,6 +1,6 @@
 // 프로젝트 목록 + 전역 검색. 행 탭 → 상세. 검색 결과 탭 → 해당 프로젝트 도형으로 이동.
-import { useRouter } from 'expo-router';
-import { Pencil, Trash2 } from 'lucide-react-native';
+import { Stack, useRouter } from 'expo-router';
+import { Map, Pencil, Plus, Trash2 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
   FlatList,
@@ -12,10 +12,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import SearchBar from '@shared/components/customs/SearchBar';
-import { colors, radius, scrim, spacing, typography } from '@shared/theme';
+import { colors, layout, radius, scrim, spacing, typography } from '@shared/theme';
 import { utilHaptic, utilHapticNotify } from '@shared/utils/util_haptics';
 
 import type { IProject } from '@entities/project/types';
@@ -29,12 +28,13 @@ import SearchResultList from '@features/search/ui/SearchResultList';
 
 export default function ProjectsScreen() {
   const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const { projects, load } = useProjectList();
+  const { projects, load, loading } = useProjectList();
   const addProject = useProjectCreate();
   const renameProject = useProjectRename();
   const removeProject = useProjectDelete();
   const [name, setName] = useState('');
+  // 새 평면도 추가 모달(우상단 + 버튼으로 열기).
+  const [adding, setAdding] = useState(false);
 
   const [query, setQuery] = useState('');
   const { results } = useSearch(query); // 전역(projectId 없음)
@@ -43,15 +43,24 @@ export default function ProjectsScreen() {
   // 이름 수정 대상 프로젝트 + 편집 중 이름.
   const [editing, setEditing] = useState<IProject | null>(null);
   const [editName, setEditName] = useState('');
+  // 삭제 확인 대상 프로젝트.
+  const [deleting, setDeleting] = useState<IProject | null>(null);
 
   useEffect(() => {
     load();
   }, [load]);
 
+  const openAdd = () => {
+    setName('');
+    setAdding(true);
+    utilHaptic('light');
+  };
+
   const onAdd = async () => {
     const trimmed = name.trim() || `평면도 ${projects.length + 1}`;
     await addProject(trimmed);
     setName('');
+    setAdding(false);
     utilHaptic('medium');
   };
 
@@ -69,14 +78,35 @@ export default function ProjectsScreen() {
     utilHaptic('light');
   };
 
-  // 삭제는 즉시 실행(피드백 #3 — alert 없음).
-  const onDelete = async (project: IProject) => {
-    await removeProject(project.id);
+  // 삭제는 파괴적 동작이라 인앱 확인 시트로 한 번 막는다(시스템 alert 대신 앱 톤).
+  const askDelete = (project: IProject) => {
+    setDeleting(project);
+    utilHaptic('light');
+  };
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    await removeProject(deleting.id);
+    setDeleting(null);
     utilHapticNotify('success');
   };
 
   return (
     <KeyboardAvoidingView style={styles.root} behavior='height'>
+      <Stack.Screen
+        options={{
+          headerRight: () => (
+            <Pressable
+              onPress={openAdd}
+              hitSlop={10}
+              accessibilityRole='button'
+              accessibilityLabel='새 평면도 추가'
+              style={({ pressed }) => [styles.headerAdd, pressed && styles.dim]}
+            >
+              <Plus size={22} color={colors.blue} strokeWidth={2.5} />
+            </Pressable>
+          ),
+        }}
+      />
       <View style={styles.searchWrap}>
         <SearchBar
           value={query}
@@ -99,9 +129,25 @@ export default function ProjectsScreen() {
             keyExtractor={p => p.id}
             contentContainerStyle={styles.listContent}
             ListEmptyComponent={
-              <Text style={[typography.metadata, styles.empty]}>
-                평면도가 없습니다. 아래에서 새로 만드세요.
-              </Text>
+              // 로딩(초기 DB 로드/시드) 중에는 진짜 빈 상태가 아니므로 표시하지 않는다(깜빡임 방지).
+              loading ? null : (
+                <View style={styles.emptyState}>
+                  <Map size={40} color={colors.textTertiary} strokeWidth={1.5} />
+                  <Text style={[typography.body, styles.emptyText]}>
+                    아직 만든 평면도가 없어요{'\n'}첫 평면도를 만들어볼까요?
+                  </Text>
+                  <Pressable
+                    onPress={openAdd}
+                    accessibilityRole='button'
+                    accessibilityLabel='새 평면도 만들기'
+                    style={({ pressed }) => [styles.emptyCta, pressed && styles.addBtnPressed]}
+                  >
+                    <Text style={[typography.button, { color: colors.canvas }]}>
+                      새 평면도 만들기
+                    </Text>
+                  </Pressable>
+                </View>
+              )
             }
             renderItem={({ item }) => (
               <View style={styles.row}>
@@ -117,7 +163,7 @@ export default function ProjectsScreen() {
                 <View style={styles.rowActions}>
                   <Pressable
                     onPress={() => openEdit(item)}
-                    hitSlop={8}
+                    hitSlop={6}
                     accessibilityRole='button'
                     accessibilityLabel='이름 수정'
                     style={({ pressed }) => [styles.iconBtn, pressed && styles.dim]}
@@ -125,8 +171,8 @@ export default function ProjectsScreen() {
                     <Pencil size={18} color={colors.textSecondary} strokeWidth={2} />
                   </Pressable>
                   <Pressable
-                    onPress={() => onDelete(item)}
-                    hitSlop={8}
+                    onPress={() => askDelete(item)}
+                    hitSlop={6}
                     accessibilityRole='button'
                     accessibilityLabel='삭제'
                     style={({ pressed }) => [styles.iconBtn, pressed && styles.dim]}
@@ -137,27 +183,44 @@ export default function ProjectsScreen() {
               </View>
             )}
           />
-
-          <View style={[styles.composer, { paddingBottom: insets.bottom + spacing.lg }]}>
-            <TextInput
-              style={styles.input}
-              value={name}
-              onChangeText={setName}
-              placeholder='새 평면도 이름'
-              placeholderTextColor={colors.textTertiary}
-              selectionColor={colors.blue}
-              returnKeyType='done'
-              onSubmitEditing={onAdd}
-            />
-            <Pressable
-              onPress={onAdd}
-              style={({ pressed }) => [styles.addBtn, pressed && styles.addBtnPressed]}
-            >
-              <Text style={[typography.button, { color: colors.canvas }]}>추가</Text>
-            </Pressable>
-          </View>
         </>
       )}
+
+      {/* 새 평면도 추가 */}
+      <Modal visible={adding} transparent animationType='fade' onRequestClose={() => setAdding(false)}>
+        <Pressable style={styles.backdrop} onPress={() => setAdding(false)}>
+          <KeyboardAvoidingView behavior='padding' style={styles.sheetWrap}>
+            <Pressable style={styles.sheet} onPress={() => {}}>
+              <Text style={typography.heading}>새 평면도</Text>
+              <TextInput
+                style={styles.editInput}
+                value={name}
+                onChangeText={setName}
+                placeholder='평면도 이름 (예: 1층 창고)'
+                placeholderTextColor={colors.textTertiary}
+                selectionColor={colors.blue}
+                autoFocus
+                returnKeyType='done'
+                onSubmitEditing={onAdd}
+              />
+              <View style={styles.sheetActions}>
+                <Pressable
+                  onPress={() => setAdding(false)}
+                  style={({ pressed }) => [styles.sheetBtn, styles.cancelBtn, pressed && styles.dim]}
+                >
+                  <Text style={[typography.button, { color: colors.textSecondary }]}>취소</Text>
+                </Pressable>
+                <Pressable
+                  onPress={onAdd}
+                  style={({ pressed }) => [styles.sheetBtn, styles.saveBtn, pressed && styles.dim]}
+                >
+                  <Text style={[typography.button, { color: colors.canvas }]}>추가하기</Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          </KeyboardAvoidingView>
+        </Pressable>
+      </Modal>
 
       {/* 프로젝트 이름 수정 */}
       <Modal
@@ -203,6 +266,40 @@ export default function ProjectsScreen() {
           </KeyboardAvoidingView>
         </Pressable>
       </Modal>
+
+      {/* 프로젝트 삭제 확인 */}
+      <Modal
+        visible={!!deleting}
+        transparent
+        animationType='fade'
+        onRequestClose={() => setDeleting(null)}
+      >
+        <Pressable style={styles.backdrop} onPress={() => setDeleting(null)}>
+          <View style={styles.sheetWrap}>
+            <Pressable style={styles.sheet} onPress={() => {}}>
+              <Text style={typography.heading}>평면도 삭제</Text>
+              <Text style={[typography.body, { color: colors.textSecondary }]}>
+                &apos;{deleting?.name}&apos;을(를) 삭제할까요?{'\n'}등록한 도형·자재·사진이 모두
+                사라져요.
+              </Text>
+              <View style={styles.sheetActions}>
+                <Pressable
+                  onPress={() => setDeleting(null)}
+                  style={({ pressed }) => [styles.sheetBtn, styles.cancelBtn, pressed && styles.dim]}
+                >
+                  <Text style={[typography.button, { color: colors.textSecondary }]}>취소</Text>
+                </Pressable>
+                <Pressable
+                  onPress={confirmDelete}
+                  style={({ pressed }) => [styles.sheetBtn, styles.deleteBtn, pressed && styles.dim]}
+                >
+                  <Text style={[typography.button, { color: colors.canvas }]}>삭제</Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -211,7 +308,21 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.canvas },
   searchWrap: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.sm },
   listContent: { paddingVertical: spacing.md },
-  empty: { textAlign: 'center', marginTop: spacing.xl5 },
+  emptyState: {
+    alignItems: 'center',
+    gap: spacing.lg,
+    marginTop: spacing.xl5,
+    paddingHorizontal: spacing.xl,
+  },
+  emptyText: { textAlign: 'center', color: colors.textSecondary },
+  emptyCta: {
+    height: layout.buttonHeight,
+    paddingHorizontal: spacing.xl2,
+    borderRadius: radius.standard,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.blue,
+  },
   row: { flexDirection: 'row', alignItems: 'center' },
   rowMain: {
     flex: 1,
@@ -223,7 +334,8 @@ const styles = StyleSheet.create({
   rowActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    // 오탭 방지(#2): hitSlop(6)*2 보다 넓은 간격을 둬서 두 터치 영역이 겹치지 않게 한다.
+    gap: spacing.lg,
     paddingRight: spacing.lg,
   },
   iconBtn: {
@@ -233,28 +345,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: radius.soft,
   },
-  composer: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.divider,
-    backgroundColor: colors.canvas,
-  },
-  input: {
-    flex: 1,
-    height: 44,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.standard,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    backgroundColor: colors.surface1,
-    ...typography.body,
-    color: colors.textPrimary,
-  },
+  headerAdd: { paddingHorizontal: spacing.xs, paddingVertical: spacing.xs },
   editInput: {
-    height: 44,
+    height: spacing.xl4,
     paddingHorizontal: spacing.lg,
     borderRadius: radius.standard,
     borderWidth: 1,
@@ -263,14 +356,6 @@ const styles = StyleSheet.create({
     ...typography.body,
     // 배경과 대비되는 진한 잉크색 명시(피드백 #2 — 글자 안 보임 방지).
     color: colors.textPrimary,
-  },
-  addBtn: {
-    height: 44,
-    paddingHorizontal: spacing.xl,
-    borderRadius: radius.standard,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.blue,
   },
   addBtnPressed: { backgroundColor: colors.bluePressed },
   backdrop: {
@@ -291,12 +376,13 @@ const styles = StyleSheet.create({
   sheetActions: { flexDirection: 'row', gap: spacing.md },
   sheetBtn: {
     flex: 1,
-    minHeight: 48,
+    minHeight: layout.buttonHeight,
     borderRadius: radius.standard,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelBtn: { backgroundColor: colors.surface1 },
   saveBtn: { backgroundColor: colors.blue },
+  deleteBtn: { backgroundColor: colors.deadline },
   dim: { opacity: 0.6 },
 });
