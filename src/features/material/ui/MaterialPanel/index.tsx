@@ -11,7 +11,6 @@ import LocalImage from '@shared/components/customs/LocalImage';
 import { colors, layout, radius, scrim, spacing, typography } from '@shared/theme';
 import { utilHaptic, utilHapticNotify } from '@shared/utils/util_haptics';
 
-import { DEFAULT_MATERIAL_NAME } from '@entities/material/consts';
 import type { IMaterial } from '@entities/material/types';
 
 import { useMaterialImagePick } from '@features/material/hooks/useMaterialImagePick';
@@ -61,6 +60,34 @@ export default function MaterialPanel({
 
   const sorted = [...materials].sort((a, b) => a.layerOrder - b.layerOrder);
 
+  // 입력창의 라이브 텍스트를 리렌더 없이 모아두는 버퍼(자재 id → 미저장 name/description).
+  // 이유: 이름 타이핑 직후 '완료'를 누르면 화면이 언마운트되며 blur(onEndEditing)가 안 걸려
+  // 입력이 유실된다. 키 입력마다 여기에 쌓아두고, 닫기 전 DB로 flush 해 유실을 막는다.
+  const pendingEdits = useRef<Map<string, { name?: string; description?: string }>>(new Map());
+
+  // 키 입력마다 라이브 값을 버퍼에 적재(setState 없음 = 목록 리렌더 없음).
+  const stagePending = (id: string, patch: { name?: string; description?: string }) => {
+    pendingEdits.current.set(id, { ...pendingEdits.current.get(id), ...patch });
+  };
+
+  // 모아둔 미저장 입력을 모두 DB에 반영. onEndEditing과 동일하게 trim/빈값 정규화.
+  const flushPending = async () => {
+    const entries = [...pendingEdits.current.entries()];
+    pendingEdits.current.clear();
+    for (const [id, patch] of entries) {
+      const next: Partial<IMaterial> = {};
+      if (patch.name !== undefined) next.name = patch.name.trim();
+      if (patch.description !== undefined) next.description = patch.description.trim() || undefined;
+      await updateMaterial(id, next);
+    }
+  };
+
+  // '완료'로 닫기 — 반드시 미저장 입력을 먼저 flush 한 뒤 닫는다(입력 유실 방지).
+  const handleClose = async () => {
+    await flushPending();
+    onRequestClose?.();
+  };
+
   // 새 층 추가 → 목록 맨 아래로 스크롤(화면 밖 추가 방지) + 이름 입력 자동 포커스.
   const onAddMaterial = async () => {
     const created = await addMaterial();
@@ -80,7 +107,7 @@ export default function MaterialPanel({
         </View>
         {onRequestClose ? (
           <Pressable
-            onPress={onRequestClose}
+            onPress={handleClose}
             hitSlop={10}
             accessibilityRole='button'
             accessibilityLabel='완료'
@@ -116,12 +143,13 @@ export default function MaterialPanel({
               InputComponent={InputComponent}
               autoFocusName={m.id === newlyAddedId}
               onNameFocus={() => setNewlyAddedId(null)}
+              onStage={patch => stagePending(m.id, patch)}
               onChange={patch => updateMaterial(m.id, patch)}
               onPickImage={async () => {
                 const picked = await pickImage(m.id);
                 if (!picked) return;
-                // 이름을 아직 안 건드렸으면(기본값) 파일명을 기본 이름으로.
-                const keepName = m.name && m.name !== DEFAULT_MATERIAL_NAME;
+                // 이름을 아직 안 넣었으면(빈 값) 파일명을 기본 이름으로.
+                const keepName = !!m.name;
                 updateMaterial(m.id, {
                   imageUri: picked.uri,
                   ...(keepName || !picked.suggestedName ? {} : { name: picked.suggestedName }),
@@ -158,7 +186,9 @@ export default function MaterialPanel({
           onPress={onAddMaterial}
           style={({ pressed }) => [styles.addBtn, pressed && styles.addBtnPressed]}
         >
-          <Text style={[typography.button, { color: colors.canvas }]}>+ 자재 층 추가</Text>
+          <Text style={[typography.button, { color: colors.canvas }]}>
+            + {materials.length + 1}층에 자재 추가하기
+          </Text>
         </Pressable>
       ) : null}
 
@@ -191,6 +221,8 @@ interface EditCardProps {
   autoFocusName?: boolean;
   /** 이름 입력이 실제 포커스를 받으면 호출(자동 포커스 재발동 방지). */
   onNameFocus?: () => void;
+  /** 키 입력마다 라이브 값을 버퍼에 적재('완료' 즉시 닫힘 시 유실 방지, 리렌더 없음). */
+  onStage: (patch: { name?: string; description?: string }) => void;
   onChange: (patch: Partial<IMaterial>) => void;
   onPickImage: () => void;
   onClearImage: () => void;
@@ -206,6 +238,7 @@ function EditCard({
   InputComponent,
   autoFocusName,
   onNameFocus,
+  onStage,
   onChange,
   onPickImage,
   onClearImage,
@@ -243,9 +276,8 @@ function EditCard({
             autoFocus={autoFocusName}
             selectTextOnFocus={autoFocusName}
             onFocus={onNameFocus}
-            onEndEditing={e =>
-              onChange({ name: e.nativeEvent.text.trim() || DEFAULT_MATERIAL_NAME })
-            }
+            onChangeText={text => onStage({ name: text })}
+            onEndEditing={e => onChange({ name: e.nativeEvent.text.trim() })}
             placeholder='자재 이름 (필수)'
             placeholderTextColor={colors.textTertiary}
             selectionColor={colors.blue}
@@ -259,6 +291,7 @@ function EditCard({
           <InputComponent
             style={styles.descInput}
             defaultValue={material.description ?? ''}
+            onChangeText={text => onStage({ description: text })}
             onEndEditing={e => onChange({ description: e.nativeEvent.text.trim() || undefined })}
             placeholder='설명'
             placeholderTextColor={colors.textTertiary}
