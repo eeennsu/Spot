@@ -12,7 +12,7 @@ import repoShapeDelete from '../repositories/delete_shape';
 import repoShapeList from '../repositories/list_shapes';
 import repoShapeSave from '../repositories/save_shape';
 
-/** 신규 도형 배치 시작 좌표(겹침 방지 계단식) */
+/** 위치 미지정 시 폴백 배치 좌표(겹침 방지 계단식) */
 const SPAWN_BASE = { x: 40, y: 40 };
 const SPAWN_STEP = 18;
 
@@ -29,9 +29,13 @@ export function useShapeCanvas(projectId: string) {
     load();
   }, [load]);
 
-  /** 카탈로그 기반 신규 도형 생성 + 즉시 영속 */
+  /**
+   * 카탈로그 기반 신규 도형 생성 + 즉시 영속.
+   * pos 지정 시 그 좌상단에 배치(호출측이 도화지 기준 중앙 아래 등 계산).
+   * 미지정 시 계단식 폴백.
+   */
   const addShape = useCallback(
-    async (type: IShapeType): Promise<IShape> => {
+    async (type: IShapeType, pos?: { x: number; y: number }): Promise<IShape> => {
       const meta = shapeCatalogOf(type);
       const offset = shapes.length * SPAWN_STEP;
       const shape: IShape = {
@@ -39,8 +43,8 @@ export function useShapeCanvas(projectId: string) {
         projectId,
         category: meta.category,
         type,
-        x: SPAWN_BASE.x + offset,
-        y: SPAWN_BASE.y + offset,
+        x: pos?.x ?? SPAWN_BASE.x + offset,
+        y: pos?.y ?? SPAWN_BASE.y + offset,
         width: meta.defaultWidth,
         height: meta.defaultHeight,
         rotation: 0,

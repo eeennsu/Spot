@@ -4,15 +4,27 @@ import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+  FadeIn,
+  FadeOut,
   useAnimatedStyle,
   useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { colors, palette, pickOnFill, radius, spacing, typography } from '@shared/theme';
+import { colors, motion, palette, pickOnFill, radius, spacing, typography } from '@shared/theme';
+import { utilHaptic } from '@shared/utils/util_haptics';
 
-import { SHAPE_MAX_SIZE, SHAPE_MIN_SIZE, isAspectLocked } from '@entities/shape/consts';
+import {
+  SHAPE_MAX_SIZE,
+  SHAPE_MIN_SIZE,
+  SHAPE_ROTATE_SNAP_THRESHOLD,
+  SHAPE_ROTATE_STEP,
+  isAspectLocked,
+} from '@entities/shape/consts';
 import type { IShape } from '@entities/shape/types';
 
 import ShapeFill from '../ShapeFill';
@@ -39,7 +51,18 @@ interface Props {
   highlighted?: boolean;
 }
 
-const HANDLE = 26; // 핸들 지름(터치 타겟 위해 hitSlop 추가)
+const HANDLE = 32; // 핸들 지름(터치 타겟 위해 hitSlop 추가)
+const HANDLE_HITSLOP = 22; // 핸들 주변 여유 터치 영역 — 잘 눌리게
+const LIFT_SCALE = motion.magicPlusLiftScale; // 드래그 시작 시 살짝 들어올림
+
+/** 각도 스냅 — 카디널(90배수) 우선 흡착, 아니면 STEP 배수로 반올림. */
+function snapAngle(deg: number): number {
+  'worklet';
+  const a = ((deg % 360) + 360) % 360;
+  const nearest90 = Math.round(a / 90) * 90;
+  if (Math.abs(a - nearest90) < SHAPE_ROTATE_SNAP_THRESHOLD) return nearest90 % 360;
+  return (Math.round(a / SHAPE_ROTATE_STEP) * SHAPE_ROTATE_STEP) % 360;
+}
 
 export default function ShapeView({
   shape,
@@ -60,6 +83,8 @@ export default function ShapeView({
   const w = useSharedValue(shape.width);
   const h = useSharedValue(shape.height);
   const rot = useSharedValue(shape.rotation);
+  const lift = useSharedValue(1); // 드래그 들어올림 스케일
+  const pulse = useSharedValue(0); // 검색 하이라이트 맥동
 
   // props(영속 결과·인스펙터 편집)로 shared value 동기화.
   useEffect(() => {
@@ -70,12 +95,35 @@ export default function ShapeView({
     rot.value = shape.rotation;
   }, [shape.x, shape.y, shape.width, shape.height, shape.rotation, tx, ty, w, h, rot]);
 
+  // 하이라이트 동안 외곽선 맥동(검색 결과 눈에 띄게).
+  useEffect(() => {
+    if (highlighted) {
+      pulse.value = withRepeat(
+        withSequence(withTiming(1, { duration: 450 }), withTiming(0, { duration: 450 })),
+        -1,
+        false,
+      );
+    } else {
+      pulse.value = withTiming(0, { duration: 150 });
+    }
+  }, [highlighted, pulse]);
+
   const locked = isAspectLocked(shape.type);
+  // 작은 도형일수록 핸들 hitSlop 을 줄여 본체(이동) 터치영역을 남긴다.
+  const handleSlop = Math.max(
+    8,
+    Math.min(HANDLE_HITSLOP, Math.floor(Math.min(shape.width, shape.height) / 4)),
+  );
 
   const containerStyle = useAnimatedStyle(() => ({
     width: w.value,
     height: h.value,
-    transform: [{ translateX: tx.value }, { translateY: ty.value }, { rotate: `${rot.value}deg` }],
+    transform: [
+      { translateX: tx.value },
+      { translateY: ty.value },
+      { rotate: `${rot.value}deg` },
+      { scale: lift.value },
+    ],
   }));
 
   // 도형 회전을 상쇄해 캡션/배지가 항상 수평으로 보이게 한다.
@@ -83,10 +131,16 @@ export default function ShapeView({
     transform: [{ rotate: `${-rot.value}deg` }],
   }));
 
+  const highlightStyle = useAnimatedStyle(() => ({ opacity: 0.45 + pulse.value * 0.55 }));
+
   // ── 탭: 선택(Edit) / 뷰어 콜백 ──
   const tap = Gesture.Tap().onEnd(() => {
-    if (editable) scheduleOnRN(onSelect, shape.id);
-    else scheduleOnRN(onTapViewer, shape);
+    if (editable) {
+      scheduleOnRN(onSelect, shape.id);
+      scheduleOnRN(utilHaptic, 'light');
+    } else {
+      scheduleOnRN(onTapViewer, shape);
+    }
   });
 
   // ── 드래그 이동(Edit) ──
@@ -95,14 +149,27 @@ export default function ShapeView({
     .onBegin(() => {
       scheduleOnRN(onSelect, shape.id);
     })
+    .onStart(() => {
+      // 실제 드래그 시작 시 들어올림 + 픽업 햅틱.
+      lift.value = withTiming(LIFT_SCALE, { duration: 120 });
+      scheduleOnRN(utilHaptic, 'medium');
+    })
     .onUpdate(e => {
-      // 도화지 경계 안으로 제한 — 가장자리에 닿으면 딱 붙음.
       const nx = shape.x + e.translationX / scale.value;
       const ny = shape.y + e.translationY / scale.value;
-      tx.value = clamp(nx, 0, boardWidth - shape.width);
-      ty.value = clamp(ny, 0, boardHeight - shape.height);
+      // 회전 고려한 AABB 클램프 — 회전된 도형도 도화지 밖으로 안 나가게.
+      const r = (shape.rotation * Math.PI) / 180;
+      const halfW =
+        (Math.abs(shape.width * Math.cos(r)) + Math.abs(shape.height * Math.sin(r))) / 2;
+      const halfH =
+        (Math.abs(shape.width * Math.sin(r)) + Math.abs(shape.height * Math.cos(r))) / 2;
+      const cx = clamp(nx + shape.width / 2, halfW, boardWidth - halfW);
+      const cy = clamp(ny + shape.height / 2, halfH, boardHeight - halfH);
+      tx.value = cx - shape.width / 2;
+      ty.value = cy - shape.height / 2;
     })
     .onEnd(() => {
+      lift.value = withTiming(1, { duration: 150 });
       scheduleOnRN(onCommit, shape.id, { x: tx.value, y: ty.value });
     });
   if (canvasPanRef) drag.blocksExternalGesture(canvasPanRef as never);
@@ -112,11 +179,16 @@ export default function ShapeView({
   // ── 리사이즈(우하단 핸들) ──
   const resize = Gesture.Pan()
     .onUpdate(e => {
-      const dw = e.translationX / scale.value;
-      const dh = e.translationY / scale.value;
-      // 도화지 경계 넘지 않게 최대 크기 제한(좌상단 고정).
-      const maxW = Math.min(SHAPE_MAX_SIZE, boardWidth - shape.x);
-      const maxH = Math.min(SHAPE_MAX_SIZE, boardHeight - shape.y);
+      // 화면 델타를 도형 로컬 축으로 역회전 보정 → 핸들 방향과 성장 방향 일치.
+      const r = (shape.rotation * Math.PI) / 180;
+      const sdx = e.translationX / scale.value;
+      const sdy = e.translationY / scale.value;
+      const dw = sdx * Math.cos(r) + sdy * Math.sin(r);
+      const dh = -sdx * Math.sin(r) + sdy * Math.cos(r);
+      // 축정렬 도형만 도화지 경계로 상한; 회전 도형은 단순 상한(경계 클램프 부정확 방지).
+      const rotated = shape.rotation % 360 !== 0;
+      const maxW = rotated ? SHAPE_MAX_SIZE : Math.min(SHAPE_MAX_SIZE, boardWidth - shape.x);
+      const maxH = rotated ? SHAPE_MAX_SIZE : Math.min(SHAPE_MAX_SIZE, boardHeight - shape.y);
       let nw = clamp(shape.width + dw, SHAPE_MIN_SIZE, maxW);
       let nh = locked ? nw : clamp(shape.height + dh, SHAPE_MIN_SIZE, maxH);
       if (locked) {
@@ -131,20 +203,27 @@ export default function ShapeView({
     });
   if (canvasPanRef) resize.blocksExternalGesture(canvasPanRef as never);
 
-  // ── 회전(상단 핸들) — 수평 드래그로 각도 증감 ──
+  // ── 회전(상단 핸들) — 수평 드래그로 각도 증감, 종료 시 스냅 흡착 ──
   const rotate = Gesture.Pan()
     .onUpdate(e => {
       rot.value = shape.rotation + e.translationX * 0.5;
     })
     .onEnd(() => {
-      scheduleOnRN(onCommit, shape.id, { rotation: Math.round(rot.value) });
+      const snapped = snapAngle(rot.value);
+      rot.value = withTiming(snapped, { duration: 150 });
+      scheduleOnRN(onCommit, shape.id, { rotation: snapped });
+      scheduleOnRN(utilHaptic, 'light');
     });
   if (canvasPanRef) rotate.blocksExternalGesture(canvasPanRef as never);
 
   const showHandles = editable && selected;
 
   return (
-    <Animated.View style={[styles.container, containerStyle]}>
+    <Animated.View
+      style={[styles.container, containerStyle]}
+      entering={FadeIn.duration(180)}
+      exiting={FadeOut.duration(140)}
+    >
       <GestureDetector gesture={bodyGesture}>
         <Animated.View style={StyleSheet.absoluteFill}>
           <ShapeFill type={shape.type} color={shape.color} label={shape.label} />
@@ -174,17 +253,22 @@ export default function ShapeView({
         </View>
       ) : null}
 
-      {/* 선택/하이라이트 외곽선 */}
-      {selected || highlighted ? <View style={styles.outline} pointerEvents='none' /> : null}
+      {/* 선택 외곽선(정적) */}
+      {selected ? <View style={styles.outline} pointerEvents='none' /> : null}
+
+      {/* 검색 하이라이트 외곽선(맥동) */}
+      {highlighted ? (
+        <Animated.View style={[styles.highlightOutline, highlightStyle]} pointerEvents='none' />
+      ) : null}
 
       {/* 핸들 */}
       {showHandles ? (
         <>
           <GestureDetector gesture={rotate}>
-            <View style={[styles.handle, styles.rotateHandle]} hitSlop={12} />
+            <View style={[styles.handle, styles.rotateHandle]} hitSlop={handleSlop} />
           </GestureDetector>
           <GestureDetector gesture={resize}>
-            <View style={[styles.handle, styles.resizeHandle]} hitSlop={12} />
+            <View style={[styles.handle, styles.resizeHandle]} hitSlop={handleSlop} />
           </GestureDetector>
         </>
       ) : null}
@@ -198,7 +282,18 @@ function clamp(v: number, lo: number, hi: number): number {
 }
 
 const styles = StyleSheet.create({
-  container: { position: 'absolute', left: 0, top: 0 },
+  // 도형은 화면의 주인공 — 흰 도화지 위에서 떠 보이도록 아주 옅은 그림자.
+  // (UI 크롬은 flat 유지, 콘텐츠 오브젝트만 살짝 깊이를 준다.)
+  container: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    shadowColor: colors.textPrimary,
+    shadowOpacity: 0.14,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
   outline: {
     position: 'absolute',
     top: 0,
@@ -208,6 +303,16 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: palette.handle,
     borderRadius: radius.soft,
+  },
+  highlightOutline: {
+    position: 'absolute',
+    top: -3,
+    left: -3,
+    right: -3,
+    bottom: -3,
+    borderWidth: 3,
+    borderColor: colors.blue,
+    borderRadius: radius.standard,
   },
   caption: {
     position: 'absolute',

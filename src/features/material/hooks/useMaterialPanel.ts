@@ -61,20 +61,48 @@ export function useMaterialPanel(shapeId: string) {
     [materials],
   );
 
-  /** 층 순서 이동(up=위로). layerOrder 를 0..n 으로 재정렬해 저장. */
+  /** 사진만 비우기(자재는 유지) — 파일 삭제 + imageUri 제거. */
+  const clearImage = useCallback(
+    async (id: string) => {
+      const target = materials.find(m => m.id === id);
+      if (!target?.imageUri) return;
+      const oldUri = target.imageUri;
+      const next: IMaterial = { ...target, imageUri: undefined };
+      setMaterials(prev => prev.map(m => (m.id === id ? next : m)));
+      await repoMaterialSave(next);
+      await utilDeleteAppImage(oldUri);
+    },
+    [materials],
+  );
+
+  /** 층 순서 이동(up=위로). 인접 두 층의 layerOrder 만 맞바꿔 2건만 저장. */
   const move = useCallback(
     async (id: string, dir: 'up' | 'down') => {
       const sorted = [...materials].sort((a, b) => a.layerOrder - b.layerOrder);
       const i = sorted.findIndex(m => m.id === id);
       const j = dir === 'up' ? i - 1 : i + 1;
       if (i < 0 || j < 0 || j >= sorted.length) return;
-      [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
-      const renumbered = sorted.map((m, idx) => ({ ...m, layerOrder: idx }));
-      setMaterials(renumbered);
-      for (const m of renumbered) await repoMaterialSave(m);
+      const a = sorted[i];
+      const b = sorted[j];
+      const swappedA: IMaterial = { ...a, layerOrder: b.layerOrder };
+      const swappedB: IMaterial = { ...b, layerOrder: a.layerOrder };
+      setMaterials(prev =>
+        prev.map(m => (m.id === a.id ? swappedA : m.id === b.id ? swappedB : m)),
+      );
+      await repoMaterialSave(swappedA);
+      await repoMaterialSave(swappedB);
     },
     [materials],
   );
 
-  return { materials, loaded, load, addMaterial, updateMaterial, removeMaterial, move };
+  return {
+    materials,
+    loaded,
+    load,
+    addMaterial,
+    updateMaterial,
+    removeMaterial,
+    clearImage,
+    move,
+  };
 }

@@ -1,11 +1,14 @@
 // 자재 패널 — 한 랙(도형)의 층별 자재. editable=Edit(CRUD/순서), false=Viewer(읽기·펼침).
 // 데이터는 useMaterialPanel 훅 경유. 이미지는 로컬 복사. 토큰만 사용.
 import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { X } from 'lucide-react-native';
+import { useRef, useState } from 'react';
+import { Alert, Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 
 import LocalImage from '@shared/components/customs/LocalImage';
-import { colors, radius, spacing, typography } from '@shared/theme';
+import { colors, radius, scrim, spacing, typography } from '@shared/theme';
+import { utilHaptic, utilHapticNotify } from '@shared/utils/util_haptics';
 
 import { DEFAULT_MATERIAL_NAME } from '@entities/material/consts';
 import type { IMaterial } from '@entities/material/types';
@@ -17,25 +20,54 @@ interface Props {
   shapeId: string;
   title: string;
   editable: boolean;
+  /** 시트 닫기(명시적 닫기 버튼용). 없으면 버튼 숨김. */
+  onRequestClose?: () => void;
 }
 
-export default function MaterialPanel({ shapeId, title, editable }: Props) {
-  const { materials, loaded, addMaterial, updateMaterial, removeMaterial, move } =
+/** 스크롤 to-end 가능한 최소 인터페이스. */
+type ScrollLike = { scrollToEnd: (opts?: { animated?: boolean }) => void };
+
+export default function MaterialPanel({ shapeId, title, editable, onRequestClose }: Props) {
+  const { materials, loaded, addMaterial, updateMaterial, removeMaterial, clearImage, move } =
     useMaterialPanel(shapeId);
   const pickImage = useMaterialImagePick();
+  const scrollRef = useRef<ScrollLike | null>(null);
+  // 전체화면으로 볼 이미지(Viewer 확대).
+  const [viewerUri, setViewerUri] = useState<string | null>(null);
 
   const sorted = [...materials].sort((a, b) => a.layerOrder - b.layerOrder);
+
+  // 새 층 추가 → 목록 맨 아래로 스크롤(화면 밖 추가 방지).
+  const onAddMaterial = async () => {
+    await addMaterial();
+    utilHaptic('light');
+    requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
+  };
 
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Text style={typography.heading} numberOfLines={1}>
+        <Text style={[typography.heading, styles.headerTitle]} numberOfLines={1}>
           {title}
         </Text>
-        <Text style={typography.metadata}>자재 {materials.length}개</Text>
+        <View style={styles.headerRight}>
+          <Text style={typography.metadata}>자재 {materials.length}개</Text>
+          {onRequestClose ? (
+            <Pressable
+              onPress={onRequestClose}
+              hitSlop={10}
+              accessibilityRole='button'
+              accessibilityLabel='닫기'
+              style={({ pressed }) => [styles.closeBtn, pressed && styles.dim]}
+            >
+              <X size={20} color={colors.textSecondary} strokeWidth={2} />
+            </Pressable>
+          ) : null}
+        </View>
       </View>
 
       <BottomSheetScrollView
+        ref={scrollRef as never}
         style={styles.scroll}
         contentContainerStyle={styles.list}
         keyboardShouldPersistTaps='handled'
@@ -66,24 +98,55 @@ export default function MaterialPanel({ shapeId, title, editable }: Props) {
                   imageUri: picked.uri,
                   ...(keepName || !picked.suggestedName ? {} : { name: picked.suggestedName }),
                 });
+                utilHaptic('light');
               }}
-              onDelete={() => removeMaterial(m.id)}
-              onMove={dir => move(m.id, dir)}
+              onClearImage={() => clearImage(m.id)}
+              onDelete={() =>
+                Alert.alert('자재 삭제', `"${m.name}" 층을 삭제할까요?`, [
+                  { text: '취소', style: 'cancel' },
+                  {
+                    text: '삭제',
+                    style: 'destructive',
+                    onPress: async () => {
+                      await removeMaterial(m.id);
+                      utilHapticNotify('success');
+                    },
+                  },
+                ])
+              }
+              onMove={dir => {
+                move(m.id, dir);
+                utilHaptic('light');
+              }}
             />
           ) : (
-            <ReadCard key={m.id} material={m} layerNo={idx + 1} />
+            <ReadCard key={m.id} material={m} layerNo={idx + 1} onOpenImage={setViewerUri} />
           ),
         )}
       </BottomSheetScrollView>
 
       {editable ? (
         <Pressable
-          onPress={addMaterial}
+          onPress={onAddMaterial}
           style={({ pressed }) => [styles.addBtn, pressed && styles.addBtnPressed]}
         >
           <Text style={[typography.button, { color: colors.canvas }]}>+ 자재 층 추가</Text>
         </Pressable>
       ) : null}
+
+      {/* 사진 전체화면 뷰어 */}
+      <Modal
+        visible={!!viewerUri}
+        transparent
+        animationType='fade'
+        onRequestClose={() => setViewerUri(null)}
+      >
+        <Pressable style={styles.viewerBackdrop} onPress={() => setViewerUri(null)}>
+          {viewerUri ? (
+            <Image source={{ uri: viewerUri }} style={styles.viewerImage} resizeMode='contain' />
+          ) : null}
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -96,6 +159,7 @@ interface EditCardProps {
   isLast: boolean;
   onChange: (patch: Partial<IMaterial>) => void;
   onPickImage: () => void;
+  onClearImage: () => void;
   onDelete: () => void;
   onMove: (dir: 'up' | 'down') => void;
 }
@@ -107,15 +171,29 @@ function EditCard({
   isLast,
   onChange,
   onPickImage,
+  onClearImage,
   onDelete,
   onMove,
 }: EditCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.cardTop}>
-        <Pressable onPress={onPickImage} style={styles.thumbWrap}>
-          <LocalImage uri={material.imageUri} style={styles.thumb} emptyLabel='사진 추가' />
-        </Pressable>
+        <View style={styles.thumbWrap}>
+          <Pressable onPress={onPickImage}>
+            <LocalImage uri={material.imageUri} style={styles.thumb} emptyLabel='사진 추가' />
+          </Pressable>
+          {material.imageUri ? (
+            <Pressable
+              onPress={onClearImage}
+              hitSlop={8}
+              accessibilityRole='button'
+              accessibilityLabel='사진 삭제'
+              style={({ pressed }) => [styles.thumbClear, pressed && styles.dim]}
+            >
+              <X size={12} color={colors.canvas} strokeWidth={3} />
+            </Pressable>
+          ) : null}
+        </View>
 
         <View style={styles.cardFields}>
           <View style={styles.layerRow}>
@@ -131,6 +209,7 @@ function EditCard({
             placeholder='자재 이름 (필수)'
             placeholderTextColor={colors.textTertiary}
             selectionColor={colors.blue}
+            returnKeyType='done'
           />
           <TagEditor
             tags={material.tags ?? []}
@@ -152,19 +231,30 @@ function EditCard({
         <Pressable
           disabled={isFirst}
           onPress={() => onMove('up')}
-          style={[styles.miniBtn, isFirst && styles.miniBtnOff]}
+          style={({ pressed }) => [
+            styles.miniBtn,
+            isFirst && styles.miniBtnOff,
+            pressed && !isFirst && styles.dim,
+          ]}
         >
           <Text style={styles.miniIcon}>▲</Text>
         </Pressable>
         <Pressable
           disabled={isLast}
           onPress={() => onMove('down')}
-          style={[styles.miniBtn, isLast && styles.miniBtnOff]}
+          style={({ pressed }) => [
+            styles.miniBtn,
+            isLast && styles.miniBtnOff,
+            pressed && !isLast && styles.dim,
+          ]}
         >
           <Text style={styles.miniIcon}>▼</Text>
         </Pressable>
         <View style={styles.spacer} />
-        <Pressable onPress={onDelete} style={[styles.miniBtn, styles.deleteMini]}>
+        <Pressable
+          onPress={onDelete}
+          style={({ pressed }) => [styles.miniBtn, styles.deleteMini, pressed && styles.dim]}
+        >
           <Text style={[styles.miniIcon, { color: colors.deadline }]}>삭제</Text>
         </Pressable>
       </View>
@@ -173,7 +263,15 @@ function EditCard({
 }
 
 // ── Viewer: 읽기 카드(탭하여 설명·사진 펼침) ──
-function ReadCard({ material, layerNo }: { material: IMaterial; layerNo: number }) {
+function ReadCard({
+  material,
+  layerNo,
+  onOpenImage,
+}: {
+  material: IMaterial;
+  layerNo: number;
+  onOpenImage: (uri: string) => void;
+}) {
   const [open, setOpen] = useState(false);
   const hasDetail = !!material.description || !!material.imageUri;
   return (
@@ -208,14 +306,21 @@ function ReadCard({ material, layerNo }: { material: IMaterial; layerNo: number 
         {hasDetail ? <Text style={styles.chev}>{open ? '▾' : '▸'}</Text> : null}
       </View>
       {open ? (
-        <View style={styles.readDetail}>
+        <Animated.View
+          style={styles.readDetail}
+          entering={FadeIn.duration(160)}
+          exiting={FadeOut.duration(120)}
+        >
           {material.imageUri ? (
-            <LocalImage uri={material.imageUri} style={styles.readImage} />
+            <Pressable onPress={() => onOpenImage(material.imageUri as string)}>
+              <LocalImage uri={material.imageUri} style={styles.readImage} />
+              <Text style={styles.imageHint}>탭하여 크게 보기</Text>
+            </Pressable>
           ) : null}
           {material.description ? (
             <Text style={typography.body}>{material.description}</Text>
           ) : null}
-        </View>
+        </Animated.View>
       ) : null}
     </Pressable>
   );
@@ -266,9 +371,18 @@ const styles = StyleSheet.create({
   spacer: { flex: 1 },
   header: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
     justifyContent: 'space-between',
     gap: spacing.sm,
+  },
+  headerTitle: { flexShrink: 1 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.circle,
   },
   list: { gap: spacing.md, paddingBottom: spacing.sm },
   empty: { color: colors.textSecondary, textAlign: 'center', paddingVertical: spacing.xl2 },
@@ -282,6 +396,17 @@ const styles = StyleSheet.create({
   cardTop: { flexDirection: 'row', gap: spacing.md },
   thumbWrap: { width: 72, height: 72 },
   thumb: { width: 72, height: 72 },
+  thumbClear: {
+    position: 'absolute',
+    top: -spacing.xs,
+    right: -spacing.xs,
+    width: 22,
+    height: 22,
+    borderRadius: radius.circle,
+    backgroundColor: colors.textPrimary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   cardFields: { flex: 1, gap: spacing.xs },
   layerRow: { flexDirection: 'row' },
   layerBadge: {
@@ -331,7 +456,7 @@ const styles = StyleSheet.create({
   cardActions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   miniBtn: {
     minWidth: 44,
-    minHeight: 36,
+    minHeight: 44,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.soft,
     alignItems: 'center',
@@ -341,6 +466,7 @@ const styles = StyleSheet.create({
   miniBtnOff: { opacity: 0.35 },
   deleteMini: { backgroundColor: colors.canvas },
   miniIcon: { ...typography.metadata, color: colors.textPrimary },
+  dim: { opacity: 0.55 },
   readRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   readThumb: { width: 44, height: 44, borderRadius: radius.soft },
   readMain: { flex: 1, gap: spacing.xs },
@@ -350,6 +476,12 @@ const styles = StyleSheet.create({
   chev: { ...typography.body, color: colors.textSecondary },
   readDetail: { gap: spacing.sm, paddingTop: spacing.xs },
   readImage: { width: '100%', height: 180 },
+  imageHint: {
+    ...typography.metadata,
+    color: colors.textTertiary,
+    textAlign: 'center',
+    paddingTop: spacing.xs,
+  },
   addBtn: {
     minHeight: 48,
     borderRadius: radius.standard,
@@ -359,4 +491,12 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.xl,
   },
   addBtnPressed: { backgroundColor: colors.bluePressed },
+  viewerBackdrop: {
+    flex: 1,
+    backgroundColor: scrim,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.lg,
+  },
+  viewerImage: { width: '100%', height: '80%' },
 });

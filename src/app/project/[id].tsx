@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, spacing, typography } from '@shared/theme';
+import { utilHaptic } from '@shared/utils/util_haptics';
 
 import { useLearnStore } from '@features/learn/stores/learn';
 import { useProjectGet } from '@features/project/hooks/useProjectGet';
@@ -50,7 +51,9 @@ export default function ProjectDetailScreen() {
               <Pressable
                 onPress={() => setSearchVisible(true)}
                 hitSlop={10}
-                style={styles.headerBtn}
+                accessibilityRole='button'
+                accessibilityLabel='검색'
+                style={({ pressed }) => [styles.headerBtn, pressed && styles.headerBtnPressed]}
               >
                 <Search size={18} color={colors.textPrimary} strokeWidth={2} />
               </Pressable>
@@ -81,7 +84,16 @@ function EditToggle() {
   const toggle = useEditorStore(s => s.toggleMode);
   const editing = mode === 'edit';
   return (
-    <Pressable onPress={toggle} hitSlop={10} style={styles.headerBtn}>
+    <Pressable
+      onPress={() => {
+        utilHaptic('light');
+        toggle();
+      }}
+      hitSlop={10}
+      accessibilityRole='button'
+      accessibilityLabel={editing ? '편집 완료' : '편집 시작'}
+      style={({ pressed }) => [styles.headerBtn, pressed && styles.headerBtnPressed]}
+    >
       <Text style={[typography.button, { color: colors.blue }]}>{editing ? '완료' : '편집'}</Text>
     </Pressable>
   );
@@ -96,4 +108,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: spacing.xs,
   },
+  headerBtnPressed: { opacity: 0.5 },
 });

@@ -31,6 +31,8 @@ export default function ShapePalette({ onAdd }: Props) {
           <Pressable
             key={item.type}
             onPress={() => onAdd(item.type)}
+            accessibilityRole='button'
+            accessibilityLabel={`${item.labelKo} 추가`}
             style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
           >
             <View style={styles.preview}>

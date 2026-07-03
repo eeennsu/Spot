@@ -162,9 +162,21 @@
   },
   "hotPaths": [
     {
+      "path": "src/app/index.tsx",
+      "accessCount": 41,
+      "lastAccessed": 1782983905925,
+      "type": "file"
+    },
+    {
       "path": "src/app/project/[id].tsx",
-      "accessCount": 20,
-      "lastAccessed": 1782633776103,
+      "accessCount": 31,
+      "lastAccessed": 1782983560955,
+      "type": "file"
+    },
+    {
+      "path": "src/entities/shape/consts.ts",
+      "accessCount": 22,
+      "lastAccessed": 1782983394564,
       "type": "file"
     },
     {
@@ -174,27 +186,27 @@
       "type": "file"
     },
     {
-      "path": "src/app/index.tsx",
+      "path": "src/shared/theme/typography.ts",
       "accessCount": 14,
-      "lastAccessed": 1782629429413,
-      "type": "file"
-    },
-    {
-      "path": "src/entities/shape/consts.ts",
-      "accessCount": 11,
-      "lastAccessed": 1782633973441,
+      "lastAccessed": 1782978373634,
       "type": "file"
     },
     {
       "path": "src/shared/theme/colors.ts",
-      "accessCount": 10,
-      "lastAccessed": 1782631713843,
+      "accessCount": 12,
+      "lastAccessed": 1782978074597,
       "type": "file"
     },
     {
       "path": "src/shared/db/schema.ts",
       "accessCount": 10,
       "lastAccessed": 1782633992209,
+      "type": "file"
+    },
+    {
+      "path": "app.json",
+      "accessCount": 9,
+      "lastAccessed": 1782978147775,
       "type": "file"
     },
     {
@@ -216,18 +228,6 @@
       "type": "file"
     },
     {
-      "path": "app.json",
-      "accessCount": 8,
-      "lastAccessed": 1782610205536,
-      "type": "file"
-    },
-    {
-      "path": "src/shared/theme/typography.ts",
-      "accessCount": 8,
-      "lastAccessed": 1782631721811,
-      "type": "file"
-    },
-    {
       "path": "package.json",
       "accessCount": 7,
       "lastAccessed": 1782610213638,
@@ -235,14 +235,26 @@
     },
     {
       "path": "src/entities/material/types.ts",
-      "accessCount": 6,
-      "lastAccessed": 1782631768163,
+      "accessCount": 7,
+      "lastAccessed": 1782977753792,
       "type": "file"
     },
     {
       "path": "src/shared/db/index.ts",
-      "accessCount": 6,
-      "lastAccessed": 1782631976363,
+      "accessCount": 7,
+      "lastAccessed": 1782978002894,
+      "type": "file"
+    },
+    {
+      "path": "src/entities/material/consts.ts",
+      "accessCount": 7,
+      "lastAccessed": 1782978046172,
+      "type": "file"
+    },
+    {
+      "path": "src/shared/theme/spacing.ts",
+      "accessCount": 7,
+      "lastAccessed": 1782978279861,
       "type": "file"
     },
     {
@@ -258,9 +270,9 @@
       "type": "file"
     },
     {
-      "path": "src/entities/material/consts.ts",
+      "path": "src/entities/project/types.ts",
       "accessCount": 5,
-      "lastAccessed": 1782633128879,
+      "lastAccessed": 1782976952913,
       "type": "file"
     },
     {
@@ -270,9 +282,9 @@
       "type": "file"
     },
     {
-      "path": "src/entities/project/types.ts",
+      "path": "src/shared/theme/radius.ts",
       "accessCount": 4,
-      "lastAccessed": 1782634001772,
+      "lastAccessed": 1782977751844,
       "type": "file"
     },
     {
@@ -291,18 +303,6 @@
       "path": "src/entities/shape/types.ts",
       "accessCount": 3,
       "lastAccessed": 1782575397265,
-      "type": "file"
-    },
-    {
-      "path": "src/shared/theme/spacing.ts",
-      "accessCount": 3,
-      "lastAccessed": 1782610824792,
-      "type": "file"
-    },
-    {
-      "path": "src/shared/theme/radius.ts",
-      "accessCount": 3,
-      "lastAccessed": 1782610825340,
       "type": "file"
     },
     {

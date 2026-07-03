@@ -2,6 +2,7 @@
 // expo-image-picker(선택) → expo-file-system(복사). DB엔 로컬 경로만.
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback } from 'react';
+import { Alert, Linking } from 'react-native';
 
 import { utilCopyImageToApp } from '@shared/utils/util_image';
 
@@ -24,7 +25,14 @@ export function useMaterialImagePick() {
   /** 이미지 1장 선택 → 앱 로컬 복사 경로 + 원본 파일명. 취소/거부 시 null. */
   return useCallback(async (key: string): Promise<IPickedImage | null> => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return null;
+    if (!perm.granted) {
+      // 조용한 무반응 방지 — 왜 안 되는지 안내 + 설정 이동.
+      Alert.alert('사진 접근 권한 필요', '자재 사진을 넣으려면 갤러리 접근을 허용해 주세요.', [
+        { text: '취소', style: 'cancel' },
+        { text: '설정 열기', onPress: () => Linking.openSettings() },
+      ]);
+      return null;
+    }
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],

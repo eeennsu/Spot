@@ -40,6 +40,7 @@ export function pickOnFill(hex: string): string {
   const r = parseInt(h.slice(0, 2), 16);
   const g = parseInt(h.slice(2, 4), 16);
   const b = parseInt(h.slice(4, 6), 16);
+  // 임계값 128(YIQ 중앙) — 중간 채도 녹색·회색에서도 대비 확보(150은 흰 글자를 골라 저대비였음).
   const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 150 ? palette.onFillDark : palette.onFillLight;
+  return yiq >= 128 ? palette.onFillDark : palette.onFillLight;
 }

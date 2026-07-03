@@ -1,17 +1,24 @@
 // 프로젝트 캔버스 위젯 — Phase 1: pan/zoom + 도형 7종 배치·조작.
 // shape feature 합성. 데이터는 features/shape/hooks 경유(repository 직접 호출 없음).
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import BottomSheet from '@shared/components/customs/BottomSheet';
 import { useBottomSheet } from '@shared/components/customs/BottomSheet/useBottomSheet';
-import { colors, palette, radius, spacing, typography } from '@shared/theme';
+import { colors, radius, spacing, typography } from '@shared/theme';
+import { utilHaptic, utilHapticNotify } from '@shared/utils/util_haptics';
 
-import { BOARD_MAX_SIZE, BOARD_MIN_SIZE } from '@entities/shape/consts';
+import { BOARD_MAX_SIZE, BOARD_MIN_SIZE, shapeCatalogOf } from '@entities/shape/consts';
+import type { IShapeType } from '@entities/shape/consts';
 import type { IShape } from '@entities/shape/types';
 
 import { useLearnData } from '@features/learn/hooks/useLearnData';
@@ -46,8 +53,12 @@ interface Props {
 
 const MIN_SCALE = 0.2;
 const MAX_SCALE = 3;
-/** 도화지가 화면에 들어차는 비율(가장자리 여백 확보) */
+/** fit 계산의 절대 하한 — 큰 도화지도 화면에 다 들어오도록(잘림 방지). 대화형 MIN_SCALE 와 별개. */
+const ABS_MIN_FIT = 0.03;
+/** Edit 모드 fit 비율(조작 여백 확보) */
 const BOARD_FIT_RATIO = 0.92;
+/** Viewer 모드 fit 비율(화면 꽉 채움) */
+const BOARD_FILL_RATIO = 1.0;
 /** 도화지 리사이즈 핸들 지름(dp) */
 const HANDLE = 28;
 
@@ -88,6 +99,8 @@ export default function ProjectCanvas({
   const boardH = useSharedValue(board.h);
   const startBoardW = useSharedValue(board.w);
   const startBoardH = useSharedValue(board.h);
+  // 최초 fit 전까지 캔버스 콘텐츠를 숨겨 원본 스케일 한 프레임 깜빡임 방지.
+  const contentOpacity = useSharedValue(0);
 
   // DB 로드/저장 결과를 shared value 에 반영.
   useEffect(() => {
@@ -145,20 +158,47 @@ export default function ProjectCanvas({
   const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 });
   const [highlightId, setHighlightId] = useState<string | null>(null);
 
-  // 최초 측정 시 도화지를 화면에 맞춰 가운데 정렬(크기 제한 공간 인지).
+  // 도화지를 화면에 맞춰 가운데 정렬. animated=true 면 부드럽게 전환.
+  const fitBoard = useCallback(
+    (ratio: number, animated: boolean) => {
+      if (canvasSize.w === 0) return;
+      const fit = Math.min(canvasSize.w / board.w, canvasSize.h / board.h) * ratio;
+      // 큰 도화지가 화면보다 크면 s 가 MIN_SCALE 이하여도 허용 → 절대 잘리지 않게.
+      const s = Math.min(Math.max(fit, ABS_MIN_FIT), MAX_SCALE);
+      const px = (canvasSize.w / 2 - board.w / 2) * s;
+      const py = (canvasSize.h / 2 - board.h / 2) * s;
+      if (animated) {
+        scale.value = withTiming(s, { duration: 260 });
+        panX.value = withTiming(px, { duration: 260 });
+        panY.value = withTiming(py, { duration: 260 });
+      } else {
+        scale.value = s;
+        panX.value = px;
+        panY.value = py;
+      }
+    },
+    // panX/panY/scale 는 shared value(안정 참조)라 deps 제외
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [canvasSize.w, canvasSize.h, board.w, board.h],
+  );
+
+  // 더블탭·복귀용 — 현재 모드에 맞는 fit 로 애니메이션.
+  const resetFit = () => fitBoard(editable ? BOARD_FIT_RATIO : BOARD_FILL_RATIO, true);
+
+  // 최초 측정 시 fit(크기 제한 공간 인지). 모드에 맞는 비율로.
   const didFit = useRef(false);
   useEffect(() => {
     if (didFit.current || canvasSize.w === 0 || !boardLoaded) return;
     didFit.current = true;
-    const fit = Math.min(canvasSize.w / board.w, canvasSize.h / board.h) * BOARD_FIT_RATIO;
-    const s = Math.min(Math.max(fit, MIN_SCALE), MAX_SCALE);
-    // 스케일 원점은 캔버스 중심: 보드 중심을 화면 중심에 맞춘다.
-    scale.value = s;
-    panX.value = (canvasSize.w / 2 - board.w / 2) * s;
-    panY.value = (canvasSize.h / 2 - board.h / 2) * s;
-    // shared value(안정 참조)라 deps 제외
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canvasSize.w, canvasSize.h, boardLoaded]);
+    fitBoard(editable ? BOARD_FIT_RATIO : BOARD_FILL_RATIO, false);
+    contentOpacity.value = withTiming(1, { duration: 200 });
+  }, [canvasSize.w, canvasSize.h, boardLoaded, editable, fitBoard, contentOpacity]);
+
+  // Viewer 진입 시 화면 꽉 채우도록 재정렬(확대해 보다가 돌아와도 정위치 복귀).
+  useEffect(() => {
+    if (!boardLoaded || canvasSize.w === 0 || !didFit.current) return;
+    if (!editable) fitBoard(BOARD_FILL_RATIO, true);
+  }, [editable, boardLoaded, canvasSize.w, canvasSize.h, fitBoard]);
 
   // 검색 결과 포커스: 중앙 정렬 + 하이라이트 + 자재면 시트.
   useEffect(() => {
@@ -188,6 +228,8 @@ export default function ProjectCanvas({
   // → 첫 몇 번 스와이프가 캔버스로 먹혀 "여러 번 당겨야 스크롤됨" 증상. 시트 열리면 캔버스 제스처 비활성.
   const sheetOpen = !!sheetShape;
 
+  // 진입 시 도화지가 화면을 꽉 채우지만(fit), Viewer 에서도 자재명을 읽으려면 확대가 필요하다.
+  // → pan/pinch 는 두 모드 모두 허용(시트 열림 중에는 비활성). 더블탭으로 항상 fit 로 복귀.
   const pan = Gesture.Pan()
     .withRef(canvasPanRef as never)
     .enabled(!sheetOpen)
@@ -217,21 +259,53 @@ export default function ProjectCanvas({
       scheduleOnRN(select, null);
     });
 
-  const canvasGesture = Gesture.Race(tapBackground, Gesture.Simultaneous(pan, pinch));
+  // 더블탭 → 현재 모드 fit 로 부드럽게 복귀(확대 후 원위치).
+  const doubleTap = Gesture.Tap()
+    .enabled(!sheetOpen)
+    .numberOfTaps(2)
+    .onEnd(() => {
+      scheduleOnRN(resetFit);
+    });
 
-  // 도화지 우하단 핸들 드래그 → 보드 크기 조절(좌상단 고정). 종료 시 DB 저장.
+  const canvasGesture = Gesture.Race(
+    Gesture.Exclusive(doubleTap, tapBackground),
+    Gesture.Simultaneous(pan, pinch),
+  );
+
+  // 도화지 우하단 핸들 드래그 → 보드 크기 조절(좌상단 고정). 최소/최대 도달 시 햅틱, 종료 시 DB 저장.
+  const atBound = useSharedValue(false);
   const boardResize = Gesture.Pan()
     .onBegin(() => {
       startBoardW.value = boardW.value;
       startBoardH.value = boardH.value;
+      scheduleOnRN(utilHaptic, 'medium');
     })
     .onUpdate(e => {
-      const nw = startBoardW.value + e.translationX / scale.value;
-      const nh = startBoardH.value + e.translationY / scale.value;
-      boardW.value = Math.min(Math.max(nw, BOARD_MIN_SIZE), BOARD_MAX_SIZE);
-      boardH.value = Math.min(Math.max(nh, BOARD_MIN_SIZE), BOARD_MAX_SIZE);
+      const nw = Math.min(
+        Math.max(startBoardW.value + e.translationX / scale.value, BOARD_MIN_SIZE),
+        BOARD_MAX_SIZE,
+      );
+      const nh = Math.min(
+        Math.max(startBoardH.value + e.translationY / scale.value, BOARD_MIN_SIZE),
+        BOARD_MAX_SIZE,
+      );
+      // 경계(최소·최대)에 새로 닿는 순간 한 번만 햅틱.
+      const hit =
+        nw === BOARD_MIN_SIZE ||
+        nw === BOARD_MAX_SIZE ||
+        nh === BOARD_MIN_SIZE ||
+        nh === BOARD_MAX_SIZE;
+      if (hit && !atBound.value) {
+        atBound.value = true;
+        scheduleOnRN(utilHaptic, 'light');
+      } else if (!hit && atBound.value) {
+        atBound.value = false;
+      }
+      boardW.value = nw;
+      boardH.value = nh;
     })
     .onEnd(() => {
+      atBound.value = false;
       scheduleOnRN(saveBoard, Math.round(boardW.value), Math.round(boardH.value));
     });
   boardResize.blocksExternalGesture(canvasPanRef as never);
@@ -240,10 +314,14 @@ export default function ProjectCanvas({
 
   // 핸들을 보드 우하단 모서리에 붙인다(보드 변환 안에 위치 → pan/zoom 따라감).
   const boardHandleStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: boardW.value - HANDLE / 2 }, { translateY: boardH.value - HANDLE / 2 }],
+    transform: [
+      { translateX: boardW.value - HANDLE / 2 },
+      { translateY: boardH.value - HANDLE / 2 },
+    ],
   }));
 
   const contentStyle = useAnimatedStyle(() => ({
+    opacity: contentOpacity.value,
     transform: [{ translateX: panX.value }, { translateY: panY.value }, { scale: scale.value }],
   }));
 
@@ -258,10 +336,37 @@ export default function ProjectCanvas({
     openMaterialSheet(shape); // 읽기전용 자재 패널
   };
 
-  const onDelete = async () => {
+  // 도형 삭제 — 자재 층까지 함께 사라지므로 확인 후 실행(되돌릴 수 없음).
+  const onDelete = () => {
     if (!selectedShape) return;
-    await removeShape(selectedShape.id);
-    select(null);
+    const target = selectedShape;
+    const label = shapeTitle(target);
+    Alert.alert('도형 삭제', `"${label}"을(를) 삭제할까요? 등록된 자재도 함께 사라집니다.`, [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: async () => {
+          await removeShape(target.id);
+          select(null);
+          utilHapticNotify('success');
+        },
+      },
+    ]);
+  };
+
+  // 신규 도형은 도화지 중앙(하단 툴바에 가리지 않는 위치)에 계단식으로 놓고 즉시 선택.
+  const handleAdd = async (type: IShapeType) => {
+    const meta = shapeCatalogOf(type);
+    // 연속 추가 시 완전 겹침 방지 — 개수에 따라 우하향 계단 오프셋(6개 주기로 순환).
+    const cascade = (shapes.length % 6) * spacing.lg;
+    const cx = board.w / 2 - meta.defaultWidth / 2 + cascade;
+    const cy = board.h / 2 - meta.defaultHeight / 2 + cascade;
+    const x = Math.min(Math.max(cx, 0), board.w - meta.defaultWidth);
+    const y = Math.min(Math.max(cy, 0), board.h - meta.defaultHeight);
+    const shape = await addShape(type, { x, y });
+    select(shape.id);
+    utilHaptic('medium');
   };
 
   const showEmpty = loaded && shapes.length === 0;
@@ -282,7 +387,7 @@ export default function ProjectCanvas({
 
         <Animated.View style={[StyleSheet.absoluteFill, contentStyle]} pointerEvents='box-none'>
           {/* 도화지 — 크기 제한 있는 배치 영역(검은 테두리). 시각용이라 터치 통과. */}
-          <View style={styles.board} pointerEvents='none' />
+          <Animated.View style={[styles.board, boardStyle]} pointerEvents='none' />
           {shapes.map(shape => (
             <ShapeView
               key={shape.id}
@@ -290,6 +395,8 @@ export default function ProjectCanvas({
               editable={editable}
               selected={selectedId === shape.id}
               scale={scale}
+              boardWidth={board.w}
+              boardHeight={board.h}
               canvasPanRef={canvasPanRef as never}
               onSelect={select}
               onTapViewer={onTapViewer}
@@ -298,6 +405,13 @@ export default function ProjectCanvas({
               highlighted={highlightId === shape.id || learnTargetShapeId === shape.id}
             />
           ))}
+
+          {/* 도화지 우하단 크기 조절 핸들 — Edit 에서만. 보드 변환 안에 있어 pan/zoom 따라감. */}
+          {editable ? (
+            <GestureDetector gesture={boardResize}>
+              <Animated.View style={[styles.boardHandle, boardHandleStyle]} hitSlop={20} />
+            </GestureDetector>
+          ) : null}
         </Animated.View>
 
         {showEmpty ? (
@@ -309,6 +423,15 @@ export default function ProjectCanvas({
             </Text>
           </View>
         ) : null}
+
+        {/* Edit 모드: 도화지 크기 + 조절 안내(핸들 발견성) */}
+        {editable ? (
+          <View style={[styles.boardInfo, { top: spacing.sm }]} pointerEvents='none'>
+            <Text style={styles.boardInfoText}>
+              도화지 {board.w}×{board.h} · 우하단 모서리로 크기 조절
+            </Text>
+          </View>
+        ) : null}
       </View>
 
       {/* Edit 하단: 인스펙터(선택 시) 또는 팔레트.
@@ -316,17 +439,19 @@ export default function ProjectCanvas({
       {editable ? (
         <View style={[styles.editBar, { paddingBottom: insets.bottom }]}>
           {selectedShape ? (
-            <ShapeInspector
-              shape={selectedShape}
-              onUpdate={patch => updateShape(selectedShape.id, patch)}
-              onDelete={onDelete}
-              onClose={() => select(null)}
-              onManageMaterials={() => openMaterialSheet(selectedShape)}
-            />
+            <Animated.View key='inspector' entering={FadeIn.duration(160)}>
+              <ShapeInspector
+                shape={selectedShape}
+                onUpdate={patch => updateShape(selectedShape.id, patch)}
+                onDelete={onDelete}
+                onClose={() => select(null)}
+                onManageMaterials={() => openMaterialSheet(selectedShape)}
+              />
+            </Animated.View>
           ) : (
-            <View style={styles.paletteWrap}>
-              <ShapePalette onAdd={addShape} />
-            </View>
+            <Animated.View key='palette' entering={FadeIn.duration(160)} style={styles.paletteWrap}>
+              <ShapePalette onAdd={handleAdd} />
+            </Animated.View>
           )}
         </View>
       ) : null}
@@ -335,23 +460,37 @@ export default function ProjectCanvas({
       {!editable && !learnActive ? (
         <>
           <Pressable
-            onPress={() => learnSheet.present()}
-            style={[styles.fab, styles.fabSecondary, { bottom: insets.bottom + spacing.xl + 60 }]}
+            onPress={() => {
+              utilHaptic('light');
+              learnSheet.present();
+            }}
+            accessibilityRole='button'
+            accessibilityLabel='학습 시작'
+            style={({ pressed }) => [
+              styles.fab,
+              styles.fabSecondary,
+              { bottom: insets.bottom + spacing.xl + 60 },
+              pressed && styles.fabPressed,
+            ]}
           >
             <Text style={[styles.fabText, { color: colors.blue }]}>학습</Text>
           </Pressable>
           <Pressable
-            onPress={() =>
-              exportPdf({ viewRef: canvasRef, projectId, title: projectName ?? '평면도' })
-            }
+            onPress={() => {
+              utilHaptic('light');
+              exportPdf({ viewRef: canvasRef, projectId, title: projectName ?? '평면도' });
+            }}
             disabled={exporting}
-            style={[
+            accessibilityRole='button'
+            accessibilityLabel='평면도 PDF 내보내기'
+            style={({ pressed }) => [
               styles.fab,
               { bottom: insets.bottom + spacing.xl },
               exporting && styles.fabDisabled,
+              pressed && styles.fabPressed,
             ]}
           >
-            <Text style={styles.fabText}>{exporting ? '...' : 'PDF'}</Text>
+            <Text style={styles.fabText}>{exporting ? '내보내는 중…' : 'PDF'}</Text>
           </Pressable>
         </>
       ) : null}
@@ -369,6 +508,7 @@ export default function ProjectCanvas({
             shapeId={sheetShape.id}
             title={shapeTitle(sheetShape)}
             editable={editable}
+            onRequestClose={() => materialSheet.dismiss()}
           />
         ) : null}
       </BottomSheet>
@@ -384,12 +524,22 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     top: 0,
-    width: BOARD_WIDTH,
-    height: BOARD_HEIGHT,
     backgroundColor: colors.board,
     borderWidth: 2,
     borderColor: colors.boardBorder,
     borderRadius: radius.soft,
+  },
+  // 우하단 크기 조절 핸들 — 눈에 띄는 원형(블루 테두리). translate 로 보드 모서리에 붙는다.
+  boardHandle: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: HANDLE,
+    height: HANDLE,
+    borderRadius: HANDLE / 2,
+    backgroundColor: colors.canvas,
+    borderWidth: 3,
+    borderColor: colors.blue,
   },
   empty: {
     position: 'absolute',
@@ -402,6 +552,15 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
   },
   emptyText: { color: colors.textSecondary, textAlign: 'center' },
+  boardInfo: {
+    position: 'absolute',
+    alignSelf: 'center',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.circle,
+    backgroundColor: colors.surface2,
+  },
+  boardInfoText: { ...typography.metadata, color: colors.textSecondary },
   editBar: {
     position: 'absolute',
     left: 0,
@@ -439,5 +598,6 @@ const styles = StyleSheet.create({
     shadowColor: colors.textPrimary,
   },
   fabDisabled: { opacity: 0.6 },
+  fabPressed: { opacity: 0.85, transform: [{ scale: 0.96 }] },
   fabText: { ...typography.button, color: colors.canvas },
 });

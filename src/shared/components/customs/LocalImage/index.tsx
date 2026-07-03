@@ -45,6 +45,8 @@ export default function LocalImage({ uri, style, emptyLabel = '사진 없음' }:
         source={{ uri }}
         style={[styles.base, style] as StyleProp<ImageStyle>}
         resizeMode='cover'
+        // Android: 뷰 크기에 맞춰 디코딩 다운샘플 → 원본 풀해상도 메모리 부담 완화.
+        resizeMethod='resize'
       />
     );
   }

@@ -103,7 +103,9 @@ export default function BottomSheet({
     >
       {dynamic ? (
         // 동적: 콘텐츠 높이 측정 필요 → BottomSheetView.
-        <BottomSheetView style={[styles.contentDynamic, { paddingBottom: insets.bottom + spacing.lg }]}>
+        <BottomSheetView
+          style={[styles.contentDynamic, { paddingBottom: insets.bottom + spacing.lg }]}
+        >
           {children}
         </BottomSheetView>
       ) : (
