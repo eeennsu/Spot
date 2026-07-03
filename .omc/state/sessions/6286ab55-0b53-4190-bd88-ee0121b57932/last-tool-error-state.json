@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"pnpm exec prettier --check \\\\\\n  src/features/material/ui/MaterialPanel/index.tsx \\\\\\n  src/widgets/ProjectCanvas/index.tsx \\\\\\n  src/features/learn/ui/LearnStart/index.tsx \\\\\\n  src/featu...",
+  "error": "Exit code 1\nChecking formatting...\n[warn] src/features/learn/ui/LearnBar/index.tsx\n[warn] src/features/shape/ui/ShapeFill/index.tsx\n[warn] Code style issues found in 2 files. Run Prettier with --write to fix.",
+  "timestamp": "2026-07-03T02:33:55.271Z",
+  "retry_count": 1
+}

@@ -24,6 +24,7 @@ import {
   SHAPE_ROTATE_SNAP_THRESHOLD,
   SHAPE_ROTATE_STEP,
   isAspectLocked,
+  shapeLabelFontSize,
 } from '@entities/shape/consts';
 import type { IShape } from '@entities/shape/types';
 
@@ -109,6 +110,8 @@ export default function ShapeView({
   }, [highlighted, pulse]);
 
   const locked = isAspectLocked(shape.type);
+  // 도형 중앙 라벨/캡션 폰트 — 도형 크기에 비례(작으면 축소, 크면 확대).
+  const labelFontSize = shapeLabelFontSize(shape.width, shape.height);
   // 작은 도형일수록 핸들 hitSlop 을 줄여 본체(이동) 터치영역을 남긴다.
   const handleSlop = Math.max(
     8,
@@ -226,14 +229,29 @@ export default function ShapeView({
     >
       <GestureDetector gesture={bodyGesture}>
         <Animated.View style={StyleSheet.absoluteFill}>
-          <ShapeFill type={shape.type} color={shape.color} label={shape.label} />
+          <ShapeFill
+            type={shape.type}
+            color={shape.color}
+            label={shape.label}
+            fontSize={labelFontSize}
+          />
         </Animated.View>
       </GestureDetector>
 
       {/* 자재명 캡션 — 도형 회전과 무관하게 항상 수평 (Viewer·Edit 공통) */}
       {caption ? (
         <Animated.View style={[styles.caption, counterRotateStyle]} pointerEvents='none'>
-          <Text style={[typography.metadata, { color: pickOnFill(shape.color) }]} numberOfLines={2}>
+          <Text
+            style={[
+              typography.metadata,
+              {
+                color: pickOnFill(shape.color),
+                fontSize: labelFontSize,
+                lineHeight: Math.round(labelFontSize * 1.2),
+              },
+            ]}
+            numberOfLines={2}
+          >
             {caption.name}
           </Text>
         </Animated.View>
@@ -336,7 +354,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  aliasText: { ...typography.metadata, color: colors.canvas, fontSize: 11, lineHeight: 14 },
+  aliasText: {
+    ...typography.metadata,
+    color: colors.canvas,
+    fontSize: typography.shapeLabel.fontSize,
+    lineHeight: 14,
+  },
   countBadge: {
     position: 'absolute',
     top: -spacing.sm,

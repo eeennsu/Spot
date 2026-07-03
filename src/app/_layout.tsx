@@ -8,7 +8,7 @@ import {
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -16,6 +16,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { migrate } from '@shared/db';
 import { colors } from '@shared/theme';
+
+import { useSeedExampleProject } from '@features/seed/hooks/useSeedExampleProject';
 
 export default function RootLayout() {
   // theme/typography 가 참조하는 패밀리명으로 Inter 로드.
@@ -25,12 +27,28 @@ export default function RootLayout() {
     'Inter-Bold': Inter_700Bold,
   });
 
-  // 빈 DB 생성 + 스키마 초기화(쿼리 전에 1회).
-  useEffect(() => {
-    migrate();
-  }, []);
+  const seedExampleProject = useSeedExampleProject();
+  // DB 준비(스키마 + 예시 시드) 완료 전엔 화면을 열지 않는다 — 목록이 시드를 놓치지 않게.
+  const [dbReady, setDbReady] = useState(false);
 
-  if (!fontsLoaded) return null;
+  // 빈 DB 생성 + 스키마 초기화(쿼리 전에 1회) → 예시 평면도 1회 시드.
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        migrate();
+        await seedExampleProject();
+      } finally {
+        // 시드 실패해도 앱 부팅은 막지 않는다.
+        if (alive) setDbReady(true);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [seedExampleProject]);
+
+  if (!fontsLoaded || !dbReady) return null;
 
   return (
     <GestureHandlerRootView style={styles.root}>

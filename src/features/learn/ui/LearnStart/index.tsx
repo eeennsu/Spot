@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import BottomSheet from '@shared/components/customs/BottomSheet';
 import { colors, radius, spacing, typography } from '@shared/theme';
+import { utilHaptic } from '@shared/utils/util_haptics';
 
 import type { ILearnType } from '../../types';
 
@@ -32,14 +33,26 @@ export default function LearnStart({ sheetRef, count, onClose, onPick }: Props) 
             <Text style={[typography.metadata, styles.muted]}>
               자재 이름 라벨을 가리고 퀴즈를 냅니다.
             </Text>
-            <Pressable onPress={() => onPick('position')} style={styles.card}>
+            <Pressable
+              onPress={() => {
+                utilHaptic('light');
+                onPick('position');
+              }}
+              style={({ pressed }) => [styles.card, pressed && styles.dim]}
+            >
               <View style={styles.cardTitle}>
                 <MapPin size={18} color={colors.textPrimary} strokeWidth={2} />
                 <Text style={typography.taskTitle}>위치 맞히기</Text>
               </View>
               <Text style={typography.metadata}>자재 이름을 보고 평면도에서 도형을 찾습니다.</Text>
             </Pressable>
-            <Pressable onPress={() => onPick('name')} style={styles.card}>
+            <Pressable
+              onPress={() => {
+                utilHaptic('light');
+                onPick('name');
+              }}
+              style={({ pressed }) => [styles.card, pressed && styles.dim]}
+            >
               <View style={styles.cardTitle}>
                 <Tag size={18} color={colors.textPrimary} strokeWidth={2} />
                 <Text style={typography.taskTitle}>이름 맞히기</Text>
@@ -63,4 +76,5 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   cardTitle: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  dim: { opacity: 0.6 },
 });

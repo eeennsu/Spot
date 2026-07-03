@@ -1,8 +1,8 @@
 // 프로젝트 목록 + 전역 검색. 행 탭 → 상세. 검색 결과 탭 → 해당 프로젝트 도형으로 이동.
 import { useRouter } from 'expo-router';
+import { Pencil, Trash2 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import {
-  Alert,
   FlatList,
   KeyboardAvoidingView,
   Modal,
@@ -40,8 +40,8 @@ export default function ProjectsScreen() {
   const { results } = useSearch(query); // 전역(projectId 없음)
   const searching = query.trim().length > 0;
 
-  // 관리(이름 수정/삭제) 대상 프로젝트 + 편집 중 이름.
-  const [managing, setManaging] = useState<IProject | null>(null);
+  // 이름 수정 대상 프로젝트 + 편집 중 이름.
+  const [editing, setEditing] = useState<IProject | null>(null);
   const [editName, setEditName] = useState('');
 
   useEffect(() => {
@@ -55,34 +55,24 @@ export default function ProjectsScreen() {
     utilHaptic('medium');
   };
 
-  const openManage = (project: IProject) => {
-    setManaging(project);
+  const openEdit = (project: IProject) => {
+    setEditing(project);
     setEditName(project.name);
-  };
-
-  const onRename = async () => {
-    if (!managing) return;
-    const trimmed = editName.trim();
-    if (trimmed && trimmed !== managing.name) await renameProject(managing.id, trimmed);
-    setManaging(null);
     utilHaptic('light');
   };
 
-  const onDelete = () => {
-    if (!managing) return;
-    const target = managing;
-    Alert.alert('평면도 삭제', `"${target.name}"을(를) 삭제할까요? 되돌릴 수 없습니다.`, [
-      { text: '취소', style: 'cancel' },
-      {
-        text: '삭제',
-        style: 'destructive',
-        onPress: async () => {
-          await removeProject(target.id);
-          setManaging(null);
-          utilHapticNotify('success');
-        },
-      },
-    ]);
+  const onRename = async () => {
+    if (!editing) return;
+    const trimmed = editName.trim();
+    if (trimmed && trimmed !== editing.name) await renameProject(editing.id, trimmed);
+    setEditing(null);
+    utilHaptic('light');
+  };
+
+  // 삭제는 즉시 실행(피드백 #3 — alert 없음).
+  const onDelete = async (project: IProject) => {
+    await removeProject(project.id);
+    utilHapticNotify('success');
   };
 
   return (
@@ -114,15 +104,37 @@ export default function ProjectsScreen() {
               </Text>
             }
             renderItem={({ item }) => (
-              <Pressable
-                onPress={() => router.push(`/project/${item.id}`)}
-                onLongPress={() => openManage(item)}
-                delayLongPress={300}
-                style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-              >
-                <Text style={typography.taskTitle}>{item.name}</Text>
-                <Text style={typography.metadata}>탭하여 열기 · 길게 눌러 관리</Text>
-              </Pressable>
+              <View style={styles.row}>
+                <Pressable
+                  onPress={() => router.push(`/project/${item.id}`)}
+                  style={({ pressed }) => [styles.rowMain, pressed && styles.rowPressed]}
+                >
+                  <Text style={typography.taskTitle} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  <Text style={typography.metadata}>탭하여 열기</Text>
+                </Pressable>
+                <View style={styles.rowActions}>
+                  <Pressable
+                    onPress={() => openEdit(item)}
+                    hitSlop={8}
+                    accessibilityRole='button'
+                    accessibilityLabel='이름 수정'
+                    style={({ pressed }) => [styles.iconBtn, pressed && styles.dim]}
+                  >
+                    <Pencil size={18} color={colors.textSecondary} strokeWidth={2} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => onDelete(item)}
+                    hitSlop={8}
+                    accessibilityRole='button'
+                    accessibilityLabel='삭제'
+                    style={({ pressed }) => [styles.iconBtn, pressed && styles.dim]}
+                  >
+                    <Trash2 size={18} color={colors.deadline} strokeWidth={2} />
+                  </Pressable>
+                </View>
+              </View>
             )}
           />
 
@@ -147,19 +159,19 @@ export default function ProjectsScreen() {
         </>
       )}
 
-      {/* 프로젝트 관리 — 이름 수정 + 삭제 */}
+      {/* 프로젝트 이름 수정 */}
       <Modal
-        visible={!!managing}
+        visible={!!editing}
         transparent
         animationType='fade'
-        onRequestClose={() => setManaging(null)}
+        onRequestClose={() => setEditing(null)}
       >
-        <Pressable style={styles.backdrop} onPress={() => setManaging(null)}>
+        <Pressable style={styles.backdrop} onPress={() => setEditing(null)}>
           <KeyboardAvoidingView behavior='padding' style={styles.sheetWrap}>
             <Pressable style={styles.sheet} onPress={() => {}}>
-              <Text style={typography.heading}>평면도 관리</Text>
+              <Text style={typography.heading}>평면도 이름 수정</Text>
               <TextInput
-                style={styles.input}
+                style={styles.editInput}
                 value={editName}
                 onChangeText={setEditName}
                 placeholder='평면도 이름'
@@ -171,14 +183,14 @@ export default function ProjectsScreen() {
               />
               <View style={styles.sheetActions}>
                 <Pressable
-                  onPress={onDelete}
+                  onPress={() => setEditing(null)}
                   style={({ pressed }) => [
                     styles.sheetBtn,
-                    styles.deleteBtn,
+                    styles.cancelBtn,
                     pressed && styles.dim,
                   ]}
                 >
-                  <Text style={[typography.button, { color: colors.deadline }]}>삭제</Text>
+                  <Text style={[typography.button, { color: colors.textSecondary }]}>취소</Text>
                 </Pressable>
                 <Pressable
                   onPress={onRename}
@@ -200,12 +212,27 @@ const styles = StyleSheet.create({
   searchWrap: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.sm },
   listContent: { paddingVertical: spacing.md },
   empty: { textAlign: 'center', marginTop: spacing.xl5 },
-  row: {
+  row: { flexDirection: 'row', alignItems: 'center' },
+  rowMain: {
+    flex: 1,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.lg,
     gap: spacing.xs,
   },
   rowPressed: { backgroundColor: colors.surface2 },
+  rowActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    paddingRight: spacing.lg,
+  },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: radius.soft,
+  },
   composer: {
     flexDirection: 'row',
     gap: spacing.md,
@@ -224,6 +251,18 @@ const styles = StyleSheet.create({
     borderColor: colors.divider,
     backgroundColor: colors.surface1,
     ...typography.body,
+    color: colors.textPrimary,
+  },
+  editInput: {
+    height: 44,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radius.standard,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    backgroundColor: colors.surface1,
+    ...typography.body,
+    // 배경과 대비되는 진한 잉크색 명시(피드백 #2 — 글자 안 보임 방지).
+    color: colors.textPrimary,
   },
   addBtn: {
     height: 44,
@@ -257,7 +296,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  deleteBtn: { backgroundColor: colors.surface1 },
+  cancelBtn: { backgroundColor: colors.surface1 },
   saveBtn: { backgroundColor: colors.blue },
   dim: { opacity: 0.6 },
 });

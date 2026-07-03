@@ -14,7 +14,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import BottomSheet from '@shared/components/customs/BottomSheet';
 import { useBottomSheet } from '@shared/components/customs/BottomSheet/useBottomSheet';
-import { colors, radius, spacing, typography } from '@shared/theme';
+import { colors, elevation, radius, spacing, typography } from '@shared/theme';
 import { utilHaptic, utilHapticNotify } from '@shared/utils/util_haptics';
 
 import { BOARD_MAX_SIZE, BOARD_MIN_SIZE, shapeCatalogOf } from '@entities/shape/consts';
@@ -45,7 +45,7 @@ interface Props {
   projectId: string;
   /** 뷰어에서 자재 도형 탭(Phase 2~3 바텀시트). Phase 1 은 선택만. */
   onTapMaterialShape?: (shape: IShape) => void;
-  /** 검색 결과 이동 대상 도형 — 중앙 정렬 + 하이라이트 + (자재면) 시트 열기 */
+  /** 검색 결과 이동 대상 도형 — 살짝 확대 + 중앙 정렬 + 하이라이트(시트 안 엶) */
   focusShapeId?: string;
   /** PDF 제목 */
   projectName?: string;
@@ -200,16 +200,20 @@ export default function ProjectCanvas({
     if (!editable) fitBoard(BOARD_FILL_RATIO, true);
   }, [editable, boardLoaded, canvasSize.w, canvasSize.h, fitBoard]);
 
-  // 검색 결과 포커스: 중앙 정렬 + 하이라이트 + 자재면 시트.
+  // 검색 결과 포커스: 살짝만 확대 + 대상 중앙 정렬 + 하이라이트(시트는 열지 않음).
   useEffect(() => {
     if (!focusShapeId || !loaded || canvasSize.w === 0) return;
     const target = shapes.find(s => s.id === focusShapeId);
     if (!target) return;
-    scale.value = withTiming(1, { duration: 220 });
-    panX.value = withTiming(canvasSize.w / 2 - (target.x + target.width / 2), { duration: 260 });
-    panY.value = withTiming(canvasSize.h / 2 - (target.y + target.height / 2), { duration: 260 });
+    // Viewer fit 대비 살짝만 확대(과확대 방지). transform origin=중앙이라 중앙정렬 pan 은 s 에 비례.
+    const fitS = Math.min(canvasSize.w / board.w, canvasSize.h / board.h);
+    const s = Math.min(Math.max(fitS * 1.8, MIN_SCALE), MAX_SCALE);
+    const cx = target.x + target.width / 2;
+    const cy = target.y + target.height / 2;
+    scale.value = withTiming(s, { duration: 260 });
+    panX.value = withTiming(s * (canvasSize.w / 2 - cx), { duration: 260 });
+    panY.value = withTiming(s * (canvasSize.h / 2 - cy), { duration: 260 });
     setHighlightId(target.id);
-    if (target.category === 'material') openMaterialSheet(target);
     const t = setTimeout(() => setHighlightId(null), 1800);
     return () => clearTimeout(t);
     // panX/panY/scale 는 shared value(안정 참조)라 deps 제외
@@ -328,7 +332,14 @@ export default function ProjectCanvas({
   const onTapViewer = (shape: IShape) => {
     // 학습 위치 맞히기: 탭이 곧 응답(시트 열지 않음)
     if (learnActive) {
-      if (learnType === 'position') answerPosition(shape.id);
+      if (learnType === 'position') {
+        const wasAnswered = useLearnStore.getState().answered;
+        answerPosition(shape.id);
+        if (!wasAnswered) {
+          const result = useLearnStore.getState().answered;
+          utilHapticNotify(result === 'correct' ? 'success' : 'error');
+        }
+      }
       return;
     }
     if (shape.category !== 'material') return;
@@ -560,7 +571,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.circle,
     backgroundColor: colors.surface2,
   },
-  boardInfoText: { ...typography.metadata, color: colors.textSecondary },
+  boardInfoText: { ...typography.metadata, color: colors.textPrimary },
   editBar: {
     position: 'absolute',
     left: 0,
@@ -579,23 +590,17 @@ const styles = StyleSheet.create({
     minWidth: 56,
     height: 48,
     paddingHorizontal: spacing.lg,
-    borderRadius: 24,
+    borderRadius: radius.circle,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.blue,
-    // magicPlus 글로우 토큰과 동일 의도
-    shadowColor: colors.blue,
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    ...elevation.magicPlus,
   },
   fabSecondary: {
     backgroundColor: colors.canvas,
     borderWidth: 1,
     borderColor: colors.divider,
-    shadowOpacity: 0.12,
-    shadowColor: colors.textPrimary,
+    ...elevation.sheet,
   },
   fabDisabled: { opacity: 0.6 },
   fabPressed: { opacity: 0.85, transform: [{ scale: 0.96 }] },

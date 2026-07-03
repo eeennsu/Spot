@@ -51,11 +51,15 @@ export default function LocalImage({ uri, style, emptyLabel = '사진 없음' }:
     );
   }
 
+  if (status === 'checking') {
+    return <View style={[styles.base, style]} />;
+  }
+
   return (
     <View style={[styles.base, styles.placeholder, style]}>
       <ImageOff size={20} color={colors.textTertiary} strokeWidth={2} />
       <Text style={[typography.metadata, styles.label]} numberOfLines={1}>
-        {status === 'checking' ? '' : emptyLabel}
+        {emptyLabel}
       </Text>
     </View>
   );

@@ -1,7 +1,7 @@
 // 자재 패널 — 한 랙(도형)의 층별 자재. editable=Edit(CRUD/순서), false=Viewer(읽기·펼침).
 // 데이터는 useMaterialPanel 훅 경유. 이미지는 로컬 복사. 토큰만 사용.
 import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { X } from 'lucide-react-native';
+import { ChevronDown, ChevronRight, ChevronUp, Trash2, X } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { Alert, Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
@@ -179,7 +179,7 @@ function EditCard({
     <View style={styles.card}>
       <View style={styles.cardTop}>
         <View style={styles.thumbWrap}>
-          <Pressable onPress={onPickImage}>
+          <Pressable onPress={onPickImage} style={({ pressed }) => pressed && styles.dim}>
             <LocalImage uri={material.imageUri} style={styles.thumb} emptyLabel='사진 추가' />
           </Pressable>
           {material.imageUri ? (
@@ -237,7 +237,7 @@ function EditCard({
             pressed && !isFirst && styles.dim,
           ]}
         >
-          <Text style={styles.miniIcon}>▲</Text>
+          <ChevronUp size={18} color={colors.textPrimary} strokeWidth={2} />
         </Pressable>
         <Pressable
           disabled={isLast}
@@ -248,14 +248,14 @@ function EditCard({
             pressed && !isLast && styles.dim,
           ]}
         >
-          <Text style={styles.miniIcon}>▼</Text>
+          <ChevronDown size={18} color={colors.textPrimary} strokeWidth={2} />
         </Pressable>
         <View style={styles.spacer} />
         <Pressable
           onPress={onDelete}
           style={({ pressed }) => [styles.miniBtn, styles.deleteMini, pressed && styles.dim]}
         >
-          <Text style={[styles.miniIcon, { color: colors.deadline }]}>삭제</Text>
+          <Trash2 size={18} color={colors.deadline} strokeWidth={2} />
         </Pressable>
       </View>
     </View>
@@ -297,13 +297,14 @@ function ReadCard({
               ))}
             </View>
           ) : null}
-          {!open && material.description ? (
-            <Text style={styles.descPreview} numberOfLines={1}>
-              {material.description}
-            </Text>
-          ) : null}
         </View>
-        {hasDetail ? <Text style={styles.chev}>{open ? '▾' : '▸'}</Text> : null}
+        {hasDetail ? (
+          open ? (
+            <ChevronDown size={18} color={colors.textSecondary} strokeWidth={2} />
+          ) : (
+            <ChevronRight size={18} color={colors.textSecondary} strokeWidth={2} />
+          )
+        ) : null}
       </View>
       {open ? (
         <Animated.View
@@ -343,10 +344,10 @@ function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string
         <Pressable
           key={t}
           onPress={() => onChange(tags.filter(x => x !== t))}
-          style={styles.tagChip}
+          style={({ pressed }) => [styles.tagChip, pressed && styles.dim]}
         >
           <Text style={styles.tagChipText}>{t}</Text>
-          <Text style={styles.tagChipX}>×</Text>
+          <X size={14} color={colors.blue} strokeWidth={2} />
         </Pressable>
       ))}
       <BottomSheetTextInput
@@ -355,7 +356,7 @@ function TagEditor({ tags, onChange }: { tags: string[]; onChange: (tags: string
         onChangeText={setDraft}
         onSubmitEditing={add}
         onEndEditing={add}
-        placeholder={tags.length ? '태그 추가' : '태그 (검색용)'}
+        placeholder={tags.length ? '입력 후 Enter로 추가' : '태그 입력 후 Enter (검색용)'}
         placeholderTextColor={colors.textTertiary}
         selectionColor={colors.blue}
         submitBehavior='submit'
@@ -432,6 +433,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.xs,
     paddingVertical: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.divider,
   },
   tagChip: {
     flexDirection: 'row',
@@ -444,7 +447,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.soft,
   },
   tagChipText: { ...typography.metadata, color: colors.blue },
-  tagChipX: { ...typography.metadata, color: colors.blue, fontSize: 15 },
   tagInput: {
     ...typography.body,
     color: colors.textPrimary,
@@ -465,15 +467,12 @@ const styles = StyleSheet.create({
   },
   miniBtnOff: { opacity: 0.35 },
   deleteMini: { backgroundColor: colors.canvas },
-  miniIcon: { ...typography.metadata, color: colors.textPrimary },
   dim: { opacity: 0.55 },
   readRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   readThumb: { width: 44, height: 44, borderRadius: radius.soft },
   readMain: { flex: 1, gap: spacing.xs },
   readNameLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   readName: { flexShrink: 1 },
-  descPreview: { ...typography.metadata, color: colors.textSecondary },
-  chev: { ...typography.body, color: colors.textSecondary },
   readDetail: { gap: spacing.sm, paddingTop: spacing.xs },
   readImage: { width: '100%', height: 180 },
   imageHint: {

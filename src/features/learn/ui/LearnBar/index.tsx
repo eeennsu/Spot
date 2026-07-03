@@ -5,6 +5,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, radius, spacing, typography } from '@shared/theme';
+import { utilHapticNotify } from '@shared/utils/util_haptics';
 
 import { useLearnStore } from '../../stores/learn';
 
@@ -34,12 +35,26 @@ export default function LearnBar({ onRestart }: Props) {
 
   const total = type === 'position' ? position.length : name.length;
 
+  // 이름 맞히기 응답 — 정답/오답 확정 순간 햅틱(시각 피드백엔 있었지만 촉각 피드백 누락).
+  const handleAnswerName = (choice: string) => {
+    const wasAnswered = useLearnStore.getState().answered;
+    answerName(choice);
+    if (!wasAnswered) {
+      const result = useLearnStore.getState().answered;
+      utilHapticNotify(result === 'correct' ? 'success' : 'error');
+    }
+  };
+
   return (
     <View style={[styles.bar, { paddingBottom: insets.bottom + spacing.md }]}>
       <View style={styles.topRow}>
         <Text style={typography.metadata}>{finished ? '완료' : `${index + 1} / ${total}`}</Text>
         <Text style={[typography.metadata, { color: colors.blue }]}>점수 {score}</Text>
-        <Pressable onPress={stop} hitSlop={10} style={styles.closeBtn}>
+        <Pressable
+          onPress={stop}
+          hitSlop={10}
+          style={({ pressed }) => [styles.closeBtn, pressed && styles.dim]}
+        >
           <Text style={[typography.button, { color: colors.textSecondary }]}>닫기</Text>
         </Pressable>
       </View>
@@ -50,10 +65,16 @@ export default function LearnBar({ onRestart }: Props) {
             점수 {score} / {total}
           </Text>
           <View style={styles.finishActions}>
-            <Pressable onPress={onRestart} style={[styles.actBtn, styles.actPrimary]}>
+            <Pressable
+              onPress={onRestart}
+              style={({ pressed }) => [styles.actBtn, styles.actPrimary, pressed && styles.dim]}
+            >
               <Text style={[typography.button, { color: colors.canvas }]}>다시</Text>
             </Pressable>
-            <Pressable onPress={stop} style={styles.actBtn}>
+            <Pressable
+              onPress={stop}
+              style={({ pressed }) => [styles.actBtn, pressed && styles.dim]}
+            >
               <Text style={typography.button}>닫기</Text>
             </Pressable>
           </View>
@@ -66,7 +87,7 @@ export default function LearnBar({ onRestart }: Props) {
           correctNames={name[index]?.correctNames ?? []}
           answered={answered}
           picked={picked}
-          onPick={answerName}
+          onPick={handleAnswerName}
           onNext={next}
         />
       )}
@@ -105,7 +126,10 @@ function PositionBody({
               {answered === 'correct' ? '정답' : '오답'}
             </Text>
           </View>
-          <Pressable onPress={onNext} style={[styles.actBtn, styles.actPrimary]}>
+          <Pressable
+            onPress={onNext}
+            style={({ pressed }) => [styles.actBtn, styles.actPrimary, pressed && styles.dim]}
+          >
             <Text style={[typography.button, { color: colors.canvas }]}>다음</Text>
           </Pressable>
         </Animated.View>
@@ -145,7 +169,11 @@ function NameBody({ choices, correctNames, answered, picked, onPick, onNext }: N
               key={c}
               disabled={showState}
               onPress={() => onPick(c)}
-              style={[styles.choice, tint && { borderColor: tint, backgroundColor: `${tint}1A` }]}
+              style={({ pressed }) => [
+                styles.choice,
+                tint && { borderColor: tint, backgroundColor: `${tint}1A` },
+                pressed && !showState && styles.dim,
+              ]}
             >
               <Text style={[typography.body, tint && { color: tint }]} numberOfLines={1}>
                 {c}
@@ -155,7 +183,15 @@ function NameBody({ choices, correctNames, answered, picked, onPick, onNext }: N
         })}
       </View>
       {answered ? (
-        <Pressable onPress={onNext} style={[styles.actBtn, styles.actPrimary, styles.nextFull]}>
+        <Pressable
+          onPress={onNext}
+          style={({ pressed }) => [
+            styles.actBtn,
+            styles.actPrimary,
+            styles.nextFull,
+            pressed && styles.dim,
+          ]}
+        >
           <Text style={[typography.button, { color: colors.canvas }]}>다음</Text>
         </Pressable>
       ) : null}
@@ -173,8 +209,9 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  closeBtn: { minHeight: 36, justifyContent: 'center' },
+  closeBtn: { minHeight: 44, justifyContent: 'center' },
   body: { gap: spacing.sm },
+  dim: { opacity: 0.6 },
   feedbackRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   feedbackLabel: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   choices: { gap: spacing.sm },

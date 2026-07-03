@@ -34,7 +34,11 @@ export default function SearchOverlay({ visible, projectId, onClose, onSelect }:
               placeholder='이 평면도에서 검색'
             />
           </View>
-          <Pressable onPress={onClose} hitSlop={10} style={styles.cancel}>
+          <Pressable
+            onPress={onClose}
+            hitSlop={10}
+            style={({ pressed }) => [styles.cancel, pressed && styles.dim]}
+          >
             <Text style={[typography.button, { color: colors.blue }]}>닫기</Text>
           </Pressable>
         </View>
@@ -63,4 +67,5 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   cancel: { minHeight: 44, justifyContent: 'center' },
+  dim: { opacity: 0.6 },
 });

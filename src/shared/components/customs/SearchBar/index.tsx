@@ -19,7 +19,7 @@ export default function SearchBar({
 }: Props) {
   return (
     <View style={styles.wrap}>
-      <Search size={15} color={colors.textTertiary} strokeWidth={2} />
+      <Search size={16} color={colors.textTertiary} strokeWidth={2} />
       <TextInput
         style={styles.input}
         value={value}
