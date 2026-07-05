@@ -82,9 +82,16 @@ export default function MaterialPanel({
     }
   };
 
-  // '완료'로 닫기 — 반드시 미저장 입력을 먼저 flush 한 뒤 닫는다(입력 유실 방지).
+  // '완료'로 닫기 — 미저장 입력을 flush 한 뒤, 이름 없는 빈 층을 정리하고 닫는다.
   const handleClose = async () => {
+    const staged = new Map(pendingEdits.current); // flush 가 버퍼를 비우므로 먼저 캡처
     await flushPending();
+    // "추가"만 하고 안 채운 유령 자재(빈 이름)가 자재 개수·학습 퀴즈를 오염시키는 것 방지(name 필수).
+    // 최종 이름 = 버퍼에 타이핑한 값 우선, 없으면 현재 값.
+    for (const m of materials) {
+      const finalName = (staged.get(m.id)?.name ?? m.name).trim();
+      if (!finalName) await removeMaterial(m.id);
+    }
     onRequestClose?.();
   };
 
