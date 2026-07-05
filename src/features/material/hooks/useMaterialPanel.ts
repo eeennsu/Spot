@@ -38,17 +38,25 @@ export function useMaterialPanel(shapeId: string) {
     return material;
   }, [materials, shapeId]);
 
-  const updateMaterial = useCallback(async (id: string, patch: Partial<IMaterial>) => {
-    let next: IMaterial | undefined;
-    setMaterials(prev =>
-      prev.map(m => {
-        if (m.id !== id) return m;
-        next = { ...m, ...patch };
-        return next;
-      }),
-    );
-    if (next) await repoMaterialSave(next);
-  }, []);
+  const updateMaterial = useCallback(
+    async (id: string, patch: Partial<IMaterial>) => {
+      const prev = materials.find(m => m.id === id);
+      let next: IMaterial | undefined;
+      setMaterials(cur =>
+        cur.map(m => {
+          if (m.id !== id) return m;
+          next = { ...m, ...patch };
+          return next;
+        }),
+      );
+      if (next) await repoMaterialSave(next);
+      // 사진 교체 시 옛 로컬 파일 정리(고아 방지). 새 파일명이 유니크라 URI 도 바뀌어 이미지 캐시 stale 도 해결.
+      if (patch.imageUri && prev?.imageUri && prev.imageUri !== patch.imageUri) {
+        await utilDeleteAppImage(prev.imageUri);
+      }
+    },
+    [materials],
+  );
 
   const removeMaterial = useCallback(
     async (id: string) => {

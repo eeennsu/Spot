@@ -4,12 +4,14 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { palette } from '@shared/theme';
 import { utilCreateId } from '@shared/utils/util_id';
+import { utilDeleteAppImage } from '@shared/utils/util_image';
 
 import { SHAPE_CATALOG, shapeCatalogOf, type IShapeType } from '@entities/shape/consts';
 import type { IShape } from '@entities/shape/types';
 
 import repoShapeDelete from '../repositories/delete_shape';
 import repoShapeList from '../repositories/list_shapes';
+import repoMaterialImagesByShape from '../repositories/material_images_by_shape';
 import repoShapeSave from '../repositories/save_shape';
 
 /** 위치 미지정 시 폴백 배치 좌표(겹침 방지 계단식) */
@@ -73,7 +75,10 @@ export function useShapeCanvas(projectId: string) {
 
   const removeShape = useCallback(async (id: string) => {
     setShapes(prev => prev.filter(s => s.id !== id));
+    // 캐스케이드로 자재 행이 사라지기 전에 사진 경로를 먼저 모아두고, 삭제 후 로컬 파일까지 정리(고아 방지).
+    const images = await repoMaterialImagesByShape(id);
     await repoShapeDelete(id);
+    for (const uri of images) await utilDeleteAppImage(uri);
   }, []);
 
   return { shapes, loaded, load, addShape, updateShape, removeShape };

@@ -2,11 +2,14 @@
 // 영속은 repository 경유. (shared/stores 에 두면 shared→features 역방향 위반이라 여기 둔다.)
 import { create } from 'zustand';
 
+import { utilDeleteAppImage } from '@shared/utils/util_image';
+
 import type { IProject } from '@entities/project/types';
 
 import repoProjectCreate from '../repositories/create_project';
 import repoProjectDelete from '../repositories/delete_project';
 import repoProjectList from '../repositories/list_projects';
+import repoMaterialImagesByProject from '../repositories/material_images_by_project';
 import repoProjectRename from '../repositories/rename_project';
 
 interface ProjectState {
@@ -51,7 +54,10 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   async removeProject(id) {
+    // 캐스케이드로 shape·material 행이 사라지기 전에 사진 경로를 모아두고, 삭제 후 로컬 파일까지 정리(고아 방지).
+    const images = await repoMaterialImagesByProject(id);
     await repoProjectDelete(id);
     await get().load();
+    for (const uri of images) await utilDeleteAppImage(uri);
   },
 }));

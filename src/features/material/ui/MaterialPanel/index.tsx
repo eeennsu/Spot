@@ -146,7 +146,9 @@ export default function MaterialPanel({
               onStage={patch => stagePending(m.id, patch)}
               onChange={patch => updateMaterial(m.id, patch)}
               onPickImage={async () => {
-                const picked = await pickImage(m.id);
+                // 유니크 파일명(id_타임스탬프)으로 복사 → 교체 시 URI 가 매번 달라져
+                // RN 이미지 URI 캐시가 옛 사진을 계속 보여주는 문제 방지. 옛 파일은 updateMaterial 이 삭제.
+                const picked = await pickImage(`${m.id}_${Date.now()}`);
                 if (!picked) return;
                 // 이름을 아직 안 넣었으면(빈 값) 파일명을 기본 이름으로.
                 const keepName = !!m.name;
