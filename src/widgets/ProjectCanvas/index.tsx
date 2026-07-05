@@ -249,15 +249,27 @@ export default function ProjectCanvas({
   const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 });
   const [highlightId, setHighlightId] = useState<string | null>(null);
 
-  // 기본 크기(2000×2600) 그대로인 프로젝트만: 최초 측정된 캔버스 영역(상·하단 UI 제외)에
-  // 도화지를 꽉 맞춰 저장. 사용자가 크기를 바꾼(기본값 아님) 프로젝트는 건드리지 않는다("기본값만").
+  // 기본 크기(2000×2600) + 도형이 하나도 없는 "빈 새 프로젝트"만: 최초 측정된 캔버스 영역에
+  // 도화지를 꽉 맞춰 저장. 이미 도형이 있으면(시드 등 2000×2600 좌표계에 배치됨) 보드를 줄이면
+  // 도형 절대좌표가 어긋나 위치가 다 틀어지므로 절대 건드리지 않는다.
+  // (shapes 까지 로드되길 기다렸다가 판단 — loaded 미대기 시 빈 배열을 빈 프로젝트로 오판.)
   const [boardNormalized, setBoardNormalized] = useState(false);
   useEffect(() => {
-    if (!boardLoaded || canvasSize.w === 0 || boardNormalized) return;
+    if (!boardLoaded || !loaded || canvasSize.w === 0 || boardNormalized) return;
     const isDefault = board.w === BOARD_WIDTH && board.h === BOARD_HEIGHT;
-    if (isDefault) saveBoard(canvasSize.w, canvasSize.h);
+    if (isDefault && shapes.length === 0) saveBoard(canvasSize.w, canvasSize.h);
     setBoardNormalized(true);
-  }, [boardLoaded, canvasSize.w, canvasSize.h, board.w, board.h, boardNormalized, saveBoard]);
+  }, [
+    boardLoaded,
+    loaded,
+    shapes.length,
+    canvasSize.w,
+    canvasSize.h,
+    board.w,
+    board.h,
+    boardNormalized,
+    saveBoard,
+  ]);
 
   // 도화지를 화면에 맞춰 가운데 정렬. animated=true 면 부드럽게 전환.
   const fitBoard = useCallback(
@@ -582,6 +594,17 @@ export default function ProjectCanvas({
                 highlighted={highlightId === shape.id || learnHighlightIds.includes(shape.id)}
               />
             ))}
+
+            {/* 정렬 스냅 가이드선 — 도형 위, 보드 변환 안(줌/팬 동행). Edit 드래그 중에만 노출. */}
+            {editable ? (
+              <AlignmentGuides
+                guideX={guideX}
+                guideY={guideY}
+                scale={scale}
+                boardW={boardW}
+                boardH={boardH}
+              />
+            ) : null}
 
             {/* 도화지 우하단 크기 조절 핸들 — Edit 에서만. 보드 변환 안에 있어 pan/zoom 따라감. */}
             {editable ? (
