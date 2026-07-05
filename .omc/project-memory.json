@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1783063720823,
+  "lastScanned": 1783250392854,
   "projectRoot": "/Users/wonderround/Documents/Git/porfolio/spot",
   "techStack": {
     "languages": [
@@ -32,7 +32,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "pnpm typecheck > /tmp/tsc.log 2>&1; echo \"TSC=$?\"; tail -30 /tmp/tsc.log",
+    "buildCommand": "pnpm tsc --noEmit 2>&1 | tail -20; echo \"exit: ${PIPESTATUS[0]}\"",
     "testCommand": null,
     "lintCommand": "pnpm lint",
     "devCommand": "pnpm start",
@@ -72,7 +72,7 @@
       "path": "android",
       "purpose": null,
       "fileCount": 6,
-      "lastAccessed": 1783063720808,
+      "lastAccessed": 1783250392473,
       "keyFiles": [
         "build.gradle",
         "gradle.properties",
@@ -85,7 +85,7 @@
       "path": "assets",
       "purpose": "Static assets",
       "fileCount": 6,
-      "lastAccessed": 1783063720808,
+      "lastAccessed": 1783250392473,
       "keyFiles": [
         "android-icon-background.png",
         "android-icon-foreground.png",
@@ -98,7 +98,7 @@
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 5,
-      "lastAccessed": 1783063720815,
+      "lastAccessed": 1783250392754,
       "keyFiles": [
         "FSD.md",
         "PHASE_WORKFLOW.md",
@@ -111,7 +111,7 @@
       "path": "ios",
       "purpose": null,
       "fileCount": 6,
-      "lastAccessed": 1783063720817,
+      "lastAccessed": 1783250392776,
       "keyFiles": [
         "Podfile",
         "Podfile.lock",
@@ -122,14 +122,14 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 0,
-      "lastAccessed": 1783063720817,
+      "lastAccessed": 1783250392777,
       "keyFiles": []
     },
     "android/app": {
       "path": "android/app",
       "purpose": "Application code",
       "fileCount": 3,
-      "lastAccessed": 1783063720817,
+      "lastAccessed": 1783250392793,
       "keyFiles": [
         "build.gradle",
         "debug.keystore",
@@ -140,21 +140,21 @@
       "path": "android/build",
       "purpose": "Build output",
       "fileCount": 0,
-      "lastAccessed": 1783063720818,
+      "lastAccessed": 1783250392802,
       "keyFiles": []
     },
     "ios/build": {
       "path": "ios/build",
       "purpose": "Build output",
       "fileCount": 0,
-      "lastAccessed": 1783063720819,
+      "lastAccessed": 1783250392811,
       "keyFiles": []
     },
     "src/app": {
       "path": "src/app",
       "purpose": "Application code",
       "fileCount": 2,
-      "lastAccessed": 1783063720819,
+      "lastAccessed": 1783250392822,
       "keyFiles": [
         "_layout.tsx",
         "index.tsx"
@@ -163,15 +163,15 @@
   },
   "hotPaths": [
     {
-      "path": "src/app/index.tsx",
-      "accessCount": 90,
-      "lastAccessed": 1783073833783,
+      "path": "src/entities/shape/consts.ts",
+      "accessCount": 104,
+      "lastAccessed": 1783254546740,
       "type": "file"
     },
     {
-      "path": "src/entities/shape/consts.ts",
-      "accessCount": 86,
-      "lastAccessed": 1783073166270,
+      "path": "src/app/index.tsx",
+      "accessCount": 96,
+      "lastAccessed": 1783250961594,
       "type": "file"
     },
     {
@@ -194,8 +194,8 @@
     },
     {
       "path": "src/shared/theme/colors.ts",
-      "accessCount": 22,
-      "lastAccessed": 1783065673487,
+      "accessCount": 24,
+      "lastAccessed": 1783254540832,
       "type": "file"
     },
     {
@@ -206,14 +206,20 @@
     },
     {
       "path": "src/entities/material/consts.ts",
-      "accessCount": 13,
-      "lastAccessed": 1783072968362,
+      "accessCount": 14,
+      "lastAccessed": 1783253981931,
       "type": "file"
     },
     {
       "path": "src/shared/db/schema.ts",
+      "accessCount": 13,
+      "lastAccessed": 1783251897568,
+      "type": "file"
+    },
+    {
+      "path": "src/entities/material/types.ts",
       "accessCount": 12,
-      "lastAccessed": 1783045230305,
+      "lastAccessed": 1783253982027,
       "type": "file"
     },
     {
@@ -223,21 +229,15 @@
       "type": "file"
     },
     {
-      "path": "src/entities/material/types.ts",
-      "accessCount": 11,
-      "lastAccessed": 1783072968857,
+      "path": "src/shared/db/index.ts",
+      "accessCount": 10,
+      "lastAccessed": 1783251897969,
       "type": "file"
     },
     {
       "path": "app.json",
       "accessCount": 9,
       "lastAccessed": 1782978147775,
-      "type": "file"
-    },
-    {
-      "path": "src/shared/db/index.ts",
-      "accessCount": 9,
-      "lastAccessed": 1783045230966,
       "type": "file"
     },
     {
