@@ -1,6 +1,6 @@
 // 단일 도형 — 절대배치 Animated.View + 제스처(이동/리사이즈/회전).
 // Edit + 선택 시에만 핸들/외곽선 노출. canvas pan 은 blocksExternalGesture 로 차단.
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -33,10 +33,12 @@ import {
   SHAPE_MIN_SIZE,
   SHAPE_ROTATE_SNAP_THRESHOLD,
   SHAPE_ROTATE_STEP,
+  SHAPE_SNAP_THRESHOLD,
   isAspectLocked,
 } from '@entities/shape/consts';
 import type { IShape } from '@entities/shape/types';
 
+import { boardSnapRect, computeSnap, shapeToSnapRect, type ISnapRect } from '../../libs/snap';
 import ShapeFill from '../ShapeFill';
 
 type GestureRef = React.MutableRefObject<unknown> | undefined;
@@ -52,6 +54,12 @@ interface Props {
   boardHeight: number;
   /** 캔버스 pan 제스처 ref — 도형 조작 시 캔버스 이동 차단 */
   canvasPanRef: GestureRef;
+  /** 정렬 스냅 대상 — 자기 제외 형제 도형들(드래그 중 이 도형들의 기준선에 흡착) */
+  siblings: IShape[];
+  /** 정렬 가이드선 x(보드 좌표) 공유값 — 드래그 중 세팅, 종료 시 -1(숨김). 부모가 소유. */
+  guideX: SharedValue<number>;
+  /** 정렬 가이드선 y(보드 좌표) 공유값 */
+  guideY: SharedValue<number>;
   onSelect: (id: string) => void;
   onTapViewer: (shape: IShape) => void;
   onCommit: (id: string, patch: Partial<IShape>) => void;
@@ -82,6 +90,9 @@ export default function ShapeView({
   boardWidth,
   boardHeight,
   canvasPanRef,
+  siblings,
+  guideX,
+  guideY,
   onSelect,
   onTapViewer,
   onCommit,
@@ -119,6 +130,13 @@ export default function ShapeView({
   }, [highlighted, pulse]);
 
   const locked = isAspectLocked(shape.type);
+
+  // 정렬 스냅 대상 — 형제 도형들의 AABB + 도화지 경계/중심. 형제는 드래그 중 정지하므로
+  // 렌더 시 1회 산출로 충분(worklet 이 이 배열을 UI 스레드로 캡처).
+  const snapTargets = useMemo<ISnapRect[]>(
+    () => [boardSnapRect(boardWidth, boardHeight), ...siblings.map(shapeToSnapRect)],
+    [siblings, boardWidth, boardHeight],
+  );
   // 도형 중앙 라벨/캡션 폰트 — 도형 크기에 비례(작으면 축소, 크면 확대).
   // 리사이즈 중 라이브 스케일: w/h 공유값에서 폰트 크기 산출(shapeLabelFontSize 와 동일 클램프).
   const liveFontSize = useDerivedValue(() => {
@@ -215,20 +233,42 @@ export default function ShapeView({
     .onUpdate(e => {
       const nx = shape.x + e.translationX / scale.value;
       const ny = shape.y + e.translationY / scale.value;
-      // 회전 고려한 AABB 클램프 — 회전된 도형도 도화지 밖으로 안 나가게.
+      // 회전 고려한 AABB 반폭/반높이 — 스냅·클램프 공용(회전 도형도 외접 사각형 기준).
       const r = (shape.rotation * Math.PI) / 180;
       const halfW =
         (Math.abs(shape.width * Math.cos(r)) + Math.abs(shape.height * Math.sin(r))) / 2;
       const halfH =
         (Math.abs(shape.width * Math.sin(r)) + Math.abs(shape.height * Math.cos(r))) / 2;
-      const cx = clamp(nx + shape.width / 2, halfW, boardWidth - halfW);
-      const cy = clamp(ny + shape.height / 2, halfH, boardHeight - halfH);
+      // 정렬 스냅 — edge/center 를 형제·도화지 기준선에 흡착. 임계는 /scale 로 화면상 일정.
+      const snapped = computeSnap(
+        nx + shape.width / 2,
+        ny + shape.height / 2,
+        halfW,
+        halfH,
+        snapTargets,
+        SHAPE_SNAP_THRESHOLD / scale.value,
+      );
+      // 새로 흡착되는 순간(직전 프레임 미흡착)에만 햅틱 — 붙는 감각, 프레임마다 반복 금지.
+      if ((snapped.guideX >= 0 && guideX.value < 0) || (snapped.guideY >= 0 && guideY.value < 0)) {
+        scheduleOnRN(utilHaptic, 'light');
+      }
+      guideX.value = snapped.guideX;
+      guideY.value = snapped.guideY;
+      // 스냅 후 도화지 경계 클램프 — 도형이 도화지 밖으로 안 나가게.
+      const cx = clamp(snapped.cx, halfW, boardWidth - halfW);
+      const cy = clamp(snapped.cy, halfH, boardHeight - halfH);
       tx.value = cx - shape.width / 2;
       ty.value = cy - shape.height / 2;
     })
     .onEnd(() => {
       lift.value = withTiming(1, { duration: 150 });
       scheduleOnRN(onCommit, shape.id, { x: tx.value, y: ty.value });
+    })
+    // 종료·취소 어느 경로든 가이드선 숨김(제스처 중단 시 잔상 방지).
+    .onFinalize(() => {
+      lift.value = withTiming(1, { duration: 150 });
+      guideX.value = -1;
+      guideY.value = -1;
     });
   if (canvasPanRef) drag.blocksExternalGesture(canvasPanRef as never);
 

@@ -52,6 +52,8 @@ export const colors = {
   success: '#34C759',
   /** 체크박스 테두리 미완료 (= textTertiary) (DESIGN.md §2 Checkbox Border) */
   checkboxBorder: '#C7C7CC',
+  /** 도형 정렬 스냅 가이드선 — 선택(blue)과 구분되는 마젠타(피그마 스마트가이드 관례) */
+  snapGuide: '#FF375F',
 
   // ── 도화지(평면도 배치 영역) ──────────────────
   /** 도화지 면 — 순백(캔버스 바깥 surface1 위에서 떠 보이게) */

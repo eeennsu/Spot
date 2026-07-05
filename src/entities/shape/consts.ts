@@ -14,6 +14,12 @@ export const SHAPE_ROTATE_STEP = 15 as const;
 export const SHAPE_ROTATE_SNAP_THRESHOLD = 7 as const;
 
 /**
+ * 정렬 스냅 흡착 임계값(화면 px) — 이동 도형의 edge/center 가 기준선에 이만큼 가까우면 딱 붙음.
+ * worklet 에서 /scale 로 나눠 보드 단위로 환산 → 줌 배율과 무관하게 화면상 흡착폭 일정.
+ */
+export const SHAPE_SNAP_THRESHOLD = 8 as const;
+
+/**
  * 도화지(평면도 배치 영역) 기본 크기(dp) — 신규 프로젝트 생성 시 초기값.
  * 무한 캔버스가 아니라 "크기 제한 있는 공간"임을 사용자에게 보여주는 기준.
  * 실제 크기는 프로젝트별로 DB(project.board_width/board_height)에 저장한다.

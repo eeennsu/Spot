@@ -41,6 +41,7 @@ import { useExportPdf } from '@features/pdf/hooks/useExportPdf';
 import { useProjectBoard } from '@features/project/hooks/useProjectBoard';
 import { useShapeCanvas } from '@features/shape/hooks/useShapeCanvas';
 import { useEditorStore } from '@features/shape/stores/editor';
+import AlignmentGuides from '@features/shape/ui/AlignmentGuides';
 import ShapeInspector from '@features/shape/ui/ShapeInspector';
 import ShapePalette from '@features/shape/ui/ShapePalette';
 import ShapeView from '@features/shape/ui/ShapeView';
@@ -166,6 +167,10 @@ export default function ProjectCanvas({
   const startBoardH = useSharedValue(board.h);
   // 최초 fit 전까지 캔버스 콘텐츠를 숨겨 원본 스케일 한 프레임 깜빡임 방지.
   const contentOpacity = useSharedValue(0);
+
+  // 정렬 스냅 가이드선(보드 좌표, -1=숨김) — 드래그 중인 ShapeView 가 세팅, 캔버스가 소유·표시.
+  const guideX = useSharedValue(-1);
+  const guideY = useSharedValue(-1);
 
   // DB 로드/저장 결과를 shared value 에 반영.
   useEffect(() => {
@@ -567,6 +572,9 @@ export default function ProjectCanvas({
                 boardWidth={board.w}
                 boardHeight={board.h}
                 canvasPanRef={canvasPanRef as never}
+                siblings={shapes.filter(s => s.id !== shape.id)}
+                guideX={guideX}
+                guideY={guideY}
                 onSelect={select}
                 onTapViewer={onTapViewer}
                 onCommit={updateShape}
