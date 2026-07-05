@@ -43,8 +43,6 @@ export default function ProjectsScreen() {
   // 이름 수정 대상 프로젝트 + 편집 중 이름.
   const [editing, setEditing] = useState<IProject | null>(null);
   const [editName, setEditName] = useState('');
-  // 삭제 확인 대상 프로젝트.
-  const [deleting, setDeleting] = useState<IProject | null>(null);
 
   useEffect(() => {
     load();
@@ -78,15 +76,9 @@ export default function ProjectsScreen() {
     utilHaptic('light');
   };
 
-  // 삭제는 파괴적 동작이라 인앱 확인 시트로 한 번 막는다(시스템 alert 대신 앱 톤).
-  const askDelete = (project: IProject) => {
-    setDeleting(project);
-    utilHaptic('light');
-  };
-  const confirmDelete = async () => {
-    if (!deleting) return;
-    await removeProject(deleting.id);
-    setDeleting(null);
+  // 삭제 — 사용자 요청(피드백 #3)으로 확인 절차 없이 트래시 탭 즉시 지운다.
+  const onDelete = async (project: IProject) => {
+    await removeProject(project.id);
     utilHapticNotify('success');
   };
 
@@ -185,7 +177,7 @@ export default function ProjectsScreen() {
                     <Pencil size={18} color={colors.textSecondary} strokeWidth={2} />
                   </Pressable>
                   <Pressable
-                    onPress={() => askDelete(item)}
+                    onPress={() => onDelete(item)}
                     hitSlop={6}
                     accessibilityRole='button'
                     accessibilityLabel='삭제'
@@ -281,39 +273,6 @@ export default function ProjectsScreen() {
         </Pressable>
       </Modal>
 
-      {/* 프로젝트 삭제 확인 */}
-      <Modal
-        visible={!!deleting}
-        transparent
-        animationType='fade'
-        onRequestClose={() => setDeleting(null)}
-      >
-        <Pressable style={styles.backdrop} onPress={() => setDeleting(null)}>
-          <View style={styles.sheetWrap}>
-            <Pressable style={styles.sheet} onPress={() => {}}>
-              <Text style={typography.heading}>평면도 삭제</Text>
-              <Text style={[typography.body, { color: colors.textSecondary }]}>
-                &apos;{deleting?.name}&apos;을(를) 삭제할까요?{'\n'}등록한 도형·자재·사진이 모두
-                사라져요.
-              </Text>
-              <View style={styles.sheetActions}>
-                <Pressable
-                  onPress={() => setDeleting(null)}
-                  style={({ pressed }) => [styles.sheetBtn, styles.cancelBtn, pressed && styles.dim]}
-                >
-                  <Text style={[typography.button, { color: colors.textSecondary }]}>취소</Text>
-                </Pressable>
-                <Pressable
-                  onPress={confirmDelete}
-                  style={({ pressed }) => [styles.sheetBtn, styles.deleteBtn, pressed && styles.dim]}
-                >
-                  <Text style={[typography.button, { color: colors.canvas }]}>삭제</Text>
-                </Pressable>
-              </View>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -397,6 +356,5 @@ const styles = StyleSheet.create({
   },
   cancelBtn: { backgroundColor: colors.surface1 },
   saveBtn: { backgroundColor: colors.blue },
-  deleteBtn: { backgroundColor: colors.deadline },
   dim: { opacity: 0.6 },
 });
