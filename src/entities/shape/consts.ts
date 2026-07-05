@@ -3,8 +3,8 @@ import type { IShapeCategory, IShapeMaterialType, IShapeSpaceType } from './type
 
 export const SHAPE_TABLE = 'shape' as const;
 
-/** 리사이즈 최소 변 길이(dp) */
-export const SHAPE_MIN_SIZE = 40 as const;
+/** 리사이즈 최소 변 길이(dp) — 사용자 요청으로 실질 제한 없음. 0/음수 지오메트리만 방지하는 최소 바닥값. */
+export const SHAPE_MIN_SIZE = 1 as const;
 /** 리사이즈 최대 변 길이(dp) — 폭주 방지 */
 export const SHAPE_MAX_SIZE = 2000 as const;
 

@@ -284,9 +284,15 @@ export default function ShapeView({
       const dw = sdx * Math.cos(r) + sdy * Math.sin(r);
       const dh = -sdx * Math.sin(r) + sdy * Math.cos(r);
       // 축정렬 도형만 도화지 경계로 상한; 회전 도형은 단순 상한(경계 클램프 부정확 방지).
+      // 상한은 하한(SHAPE_MIN_SIZE) 밑으로 내려가지 않게 가둔다 — 도형이 보드 밖/우하단에 걸치면
+      // boardWidth - shape.x 가 음수가 되어 clamp 가 뒤집혀 크기가 튕겨 줄던 버그 방지.
       const rotated = shape.rotation % 360 !== 0;
-      const maxW = rotated ? SHAPE_MAX_SIZE : Math.min(SHAPE_MAX_SIZE, boardWidth - shape.x);
-      const maxH = rotated ? SHAPE_MAX_SIZE : Math.min(SHAPE_MAX_SIZE, boardHeight - shape.y);
+      const maxW = rotated
+        ? SHAPE_MAX_SIZE
+        : Math.max(SHAPE_MIN_SIZE, Math.min(SHAPE_MAX_SIZE, boardWidth - shape.x));
+      const maxH = rotated
+        ? SHAPE_MAX_SIZE
+        : Math.max(SHAPE_MIN_SIZE, Math.min(SHAPE_MAX_SIZE, boardHeight - shape.y));
       let nw = clamp(shape.width + dw, SHAPE_MIN_SIZE, maxW);
       let nh = locked ? nw : clamp(shape.height + dh, SHAPE_MIN_SIZE, maxH);
       if (locked) {
